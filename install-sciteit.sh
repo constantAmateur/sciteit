@@ -62,14 +62,6 @@ aptitude update
 DEBIAN_FRONTEND=noninteractive aptitude install $APTITUDE_OPTIONS python-dev python-setuptools python-imaging python-pycaptcha python-mako python-nose python-decorator python-formencode python-pastescript python-beaker python-webhelpers python-amqplib python-pylibmc python-pycountry python-psycopg2 python-cssutils python-beautifulsoup python-sqlalchemy cython python-pybabel python-tz python-boto python-lxml python-pylons python-pycassa python-recaptcha gettext make optipng uwsgi uwsgi-core uwsgi-plugin-python nginx git-core python-profiler memcached postgresql postgresql-client curl daemontools daemontools-run rabbitmq-server cassandra python-bcrypt python-snudown
 #Setup extra things we need that reddit doesn't
 aptitude install $APTITUDE_OPTIONS python-feedparser
-#Setup solr to run...
-mkdir -p /home/solr
-cd /home/solr
-wget http://www.trieuvan.com/apache//lucene/solr/1.4.1/apache-solr-1.4.1.tgz
-tar -xvf apache-solr-1.4.1.tgz
-cp $SCITEIT_HOME/sciteit/config/solr/schema.xml /home/solr/apache-solr-1.4.1/example/solr/conf/
-cp $SCITEIT_HOME/sciteit/config/solr/solrconfig.xml /home/solr/apache-solr-1.4.1/example/solr/conf/
-chown -R sciteit:sciteit apache-solr-1.4.1
 #Setup latex seperately as it's huge
 aptitude install $APTITUDE_OPTIONS texlive-full
 
@@ -105,6 +97,20 @@ fi
 if [ ! -d $SCITEIT_HOME/scihtmlatex ]; then
     sudo -u $SCIETIT_USER git clone $SCIHTMLATEX_REPO
 fi
+
+#Setup solr to run...
+if [ ! -d /home/solr/apache-solr-1.4.1 ]; then
+    mkdir -p /home/solr
+    cd /home/solr
+    if [ ! -f apache-solr-1.4.1.tgz ]; then
+        wget http://www.trieuvan.com/apache//lucene/solr/1.4.1/apache-solr-1.4.1.tgz
+    fi
+    tar -xvf apache-solr-1.4.1.tgz
+    cp $SCITEIT_HOME/sciteit/config/solr/schema.xml /home/solr/apache-solr-1.4.1/example/solr/conf/
+    cp $SCITEIT_HOME/sciteit/config/solr/solrconfig.xml /home/solr/apache-solr-1.4.1/example/solr/conf/
+    chown -R sciteit:sciteit /home/solr
+fi
+
 
 # wait a bit to make sure all the servers come up
 sleep 30
