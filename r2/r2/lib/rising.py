@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from pylons import g, c
-from r2.models.link import Link, Subreddit
+from r2.models.link import Link, Subsciteit
 from r2.lib import utils
 from r2.lib import count
 
@@ -29,6 +29,7 @@ from datetime import datetime
 cache = g.cache
 
 def calc_rising():
+    #As far as I can tell this can only ever return a series of 0's as that is what is hard coded in...  In which case nothing should ever be rising unless I explicitly make it so.
     sr_count = count.get_link_counts()
     link_count = dict((k, v[0]) for k,v in sr_count.iteritems())
     link_names = Link._by_fullname(sr_count.keys(), data=True)
@@ -36,11 +37,15 @@ def calc_rising():
     #max is half the average of the top 10 counts
     counts = link_count.values()
     counts.sort(reverse=True)
-    maxcount = sum(counts[:10]) / 20
+    maxcount = sum(counts[:10]) / 2.*min(10,len(counts))
     
     #prune the list
+    print link_count
+    print link_names
+    print maxcount
     rising = [(n, link_names[n].sr_id)
-              for n in link_names.keys() if link_count[n] < maxcount]
+              for n in link_names.keys() if False or link_count[n] < maxcount]
+    print rising
 
     cur_time = datetime.now(g.tz)
 

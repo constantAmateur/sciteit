@@ -3,7 +3,7 @@ r = window.r || {}
 r.setup = function(config) {
     r.config = config
     // Set the legacy config global
-    reddit = config
+    sciteit = config
 }
 
 $(function() {

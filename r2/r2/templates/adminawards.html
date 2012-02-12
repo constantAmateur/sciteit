@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -40,8 +40,7 @@
   <br/>
 </%def>
 
-<%def name="awardedit(fullname, title='', awardtype='', codename='', imgurl='',
-                      api_ok=False)">
+<%def name="awardedit(fullname, title='', awardtype='', codename='', imgurl='')">
  <form action="/post/editaward" method="post" class="pretty-form medium-text"
        style="display:none"
        onsubmit="return post_form(this, 'editaward');" id="awardedit-${fullname}">
@@ -70,20 +69,6 @@
         ${awardtype_radio("manual", "manual", fullname, awardtype)}
         ${awardtype_radio("invisible", "invisible", fullname, awardtype)}
         ${error_field("NO_TEXT", "awardtype", "span")}
-      </td>
-    </tr>
-    <tr>
-      <td>API ok?</td>
-      <td>
-        <input name="api_ok" id="award_${fullname}_api_ok"
-          type="checkbox"
-          %if api_ok:
-            checked="checked"
-          %endif
-          />
-        <label for="award_${fullname}_api_ok">
-          allow adding/removing this award via API
-        </label>
       </td>
     </tr>
     <tr>
@@ -119,7 +104,7 @@
      <td class="entry">
        ${awardbuttons(award.codename)}
        ${awardedit(award._fullname, award.title, award.awardtype,
-       award.codename, award.imgurl, award.api_ok)}
+       award.codename, award.imgurl)}
      </td>
    </tr>
   %endfor

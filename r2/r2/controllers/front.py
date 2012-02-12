@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -21,7 +21,7 @@
 ################################################################################
 from validator import *
 from pylons.i18n import _, ungettext
-from reddit_base import RedditController, base_listing, paginated_listing
+from sciteit_base import SciteitController, base_listing
 from r2 import config
 from r2.models import *
 from r2.lib.pages import *
@@ -36,9 +36,8 @@ from r2.lib.filters import unsafe
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
-from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
-from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
+from r2.lib.solrsearch import RelatedSearchQuery, SubsciteitSearchQuery,SearchQuery,UserSearchQuery,LinkSearchQuery
 from r2.lib.indextank import IndextankQuery, IndextankException, InvalidIndextankQuery
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
@@ -54,7 +53,7 @@ import re, socket
 import time as time_module
 from urllib import quote_plus
 
-class FrontController(RedditController):
+class FrontController(SciteitController):
 
     allow_stylesheets = True
 
@@ -178,15 +177,179 @@ class FrontController(RedditController):
               sort         = VMenu('controller', CommentSortMenu),
               limit        = VInt('limit'),
               depth        = VInt('depth'))
+    def GET_criticisms(self, article, comment, context, sort, limit, depth):
+        """Comment page for a given 'article'."""
+        if comment and comment.link_id != article._id:
+            return self.abort404()
+
+        sr = Subsciteit._byID(article.sr_id, True)
+
+        if sr.name == g.takedown_sr:
+            request.environ['SCITEIT_TAKEDOWN'] = article._fullname
+            return self.abort404()
+
+        if not c.default_sr and c.site._id != sr._id:
+            return self.abort404()
+
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
+
+        #check for 304
+        self.check_modified(article, 'criticisms')
+
+        # If there is a focal comment, communicate down to
+        # comment_skeleton.html who that will be. Also, skip
+        # comment_visits check
+        previous_visits = None
+        if comment:
+	    if not comment.criticism:
+	    	#This shouldn't have happened...
+		abort(403,'forbidden')
+            c.focal_comment = comment._id36
+        elif (c.user_is_loggedin and c.user.gold and
+              c.user.pref_highlight_new_comments):
+            #TODO: remove this profiling if load seems okay
+            from datetime import datetime
+            before = datetime.now(g.tz)
+            previous_visits = self._comment_visits(article, c.user, c.start_time)
+            after = datetime.now(g.tz)
+            delta = (after - before)
+            msec = (delta.seconds * 1000 + delta.microseconds / 1000)
+            if msec >= 100:
+                g.log.warning("previous_visits code took %d msec" % msec)
+
+        # check if we just came from the submit page
+        infotext = None
+        if request.get.get('already_submitted'):
+            infotext = strings.already_submitted % article.resubmit_link()
+
+        check_cheating('comments')
+
+        if not c.user.pref_num_comments:
+            num = g.num_comments
+        elif c.user.gold:
+            num = min(c.user.pref_num_comments, g.max_comments_gold)
+        else:
+            num = min(c.user.pref_num_comments, g.max_comments)
+
+        kw = {}
+        # allow depth to be reset (I suspect I'll turn the VInt into a
+        # validator on my next pass of .compact)
+        if depth is not None and 0 < depth < MAX_RECURSION:
+            kw['max_depth'] = depth
+        elif c.render_style == "compact":
+            kw['max_depth'] = 5
+
+	kw['critpage']=True
+        displayPane = PaneStack()
+
+        # allow the user's total count preferences to be overwritten
+        # (think of .embed as the use case together with depth=1)
+
+        if limit and limit > 0:
+            num = limit
+
+        if c.user_is_loggedin and c.user.gold:
+            if num > g.max_comments_gold:
+                displayPane.append(InfoBar(message =
+                                           strings.over_comment_limit_gold
+                                           % max(0, g.max_comments_gold)))
+                num = g.max_comments_gold
+        elif num > g.max_comments:
+            if limit:
+                displayPane.append(InfoBar(message =
+                                       strings.over_comment_limit
+                                       % dict(max=max(0, g.max_comments),
+                                              goldmax=max(0,
+                                                   g.max_comments_gold))))
+            num = g.max_comments
+
+        # if permalink page, add that message first to the content
+        if comment:
+            displayPane.append(PermalinkMessage(article.make_permalink_slow(criticism=True)))
+
+        displayPane.append(LinkCommentSep())
+        # insert reply box only for logged in user
+        if c.user_is_loggedin and can_comment_link(article) and not is_api():
+            #no comment box for permalinks
+            display = False
+            if not comment:
+                age = c.start_time - article._date
+                if age.days < g.REPLY_AGE_LIMIT:
+                    display = True
+            displayPane.append(UserText(item = article, creating = True,
+                                        post_form = 'criticism',
+                                        display = display,
+                                        cloneable = True))
+
+        if previous_visits:
+            displayPane.append(CommentVisitsBox(previous_visits))
+            # Used in later "more comments" renderings
+            pv_hex = md5(repr(previous_visits)).hexdigest()
+            g.cache.set(pv_hex, previous_visits, time=g.comment_visits_period)
+            c.previous_visits_hex = pv_hex
+
+        # Used in template_helpers
+        c.previous_visits = previous_visits
+
+        # finally add the comment listing
+        displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
+                                       comment, context, num, **kw))
+
+        subtitle_buttons = []
+
+        if c.focal_comment or context is not None:
+            subtitle = None
+        elif article.num_criticisms == 0:
+            subtitle = _("no criticisms (yet)")
+        elif article.num_criticisms <= num:
+            subtitle = _("all %d criticisms") % article.num_criticisms
+        else:
+            subtitle = _("top %d criticisms") % num
+
+            if g.max_comments > num:
+                self._add_show_comments_link(subtitle_buttons, article, num,
+                                             g.max_comments, gold=False)
+
+            if (c.user_is_loggedin and c.user.gold
+                and article.num_comments > g.max_comments):
+                self._add_show_comments_link(subtitle_buttons, article, num,
+                                             g.max_comments_gold, gold=True)
+
+        res = LinkInfoPage(link = article, comment = comment,
+                           content = displayPane,
+                           subtitle = subtitle,
+                           subtitle_buttons = subtitle_buttons,
+                           nav_menus = [CommentSortMenu(default = sort)],
+                           infotext = infotext).render()
+        return res
+
+    @validate(article      = VLink('article'),
+              comment      = VCommentID('comment'),
+              context      = VInt('context', min = 0, max = 8),
+              sort         = VMenu('controller', CommentSortMenu),
+              limit        = VInt('limit'),
+              depth        = VInt('depth'))
+    def POST_criticisms(self, article, comment, context, sort, limit, depth):
+        # VMenu validator will save the value of sort before we reach this
+        # point. Now just redirect to GET mode.
+        return self.redirect(request.fullpath + query_string(dict(sort=sort)))
+
+    @validate(article      = VLink('article'),
+              comment      = VCommentID('comment'),
+              context      = VInt('context', min = 0, max = 8),
+              sort         = VMenu('controller', CommentSortMenu),
+              limit        = VInt('limit'),
+              depth        = VInt('depth'))
     def GET_comments(self, article, comment, context, sort, limit, depth):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:
             return self.abort404()
 
-        sr = Subreddit._byID(article.sr_id, True)
+        sr = Subsciteit._byID(article.sr_id, True)
 
         if sr.name == g.takedown_sr:
-            request.environ['REDDIT_TAKEDOWN'] = article._fullname
+            request.environ['SCITEIT_TAKEDOWN'] = article._fullname
             return self.abort404()
 
         if not c.default_sr and c.site._id != sr._id:
@@ -237,7 +400,7 @@ class FrontController(RedditController):
             kw['max_depth'] = depth
         elif c.render_style == "compact":
             kw['max_depth'] = 5
-
+	#kw['critpage']=False
         displayPane = PaneStack()
 
         # allow the user's total count preferences to be overwritten
@@ -342,10 +505,10 @@ class FrontController(RedditController):
 
     @validate(VUser(),
               name = nop('name'))
-    def GET_newreddit(self, name):
+    def GET_newsciteit(self, name):
         """Create a community form"""
-        title = _('create a reddit')
-        content=CreateSubreddit(name = name or '')
+        title = _('create a sciteit')
+        content=CreateSubsciteit(name = name or '')
         res = FormPage(_("create a community"),
                        content = content,
                        ).render()
@@ -362,78 +525,6 @@ class FrontController(RedditController):
             return c.response
         else:
             return self.abort404()
-
-    def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
-
-        if mod and action:
-            query = Subreddit.get_modactions(srs, mod=mod, action=None)
-            def keep_fn(ma):
-                return ma.action == action
-        else:
-            query = Subreddit.get_modactions(srs, mod=mod, action=action)
-            def keep_fn(ma):
-                return True
-
-        builder = QueryBuilder(query, skip=True, num=num, after=after, 
-                               keep_fn=keep_fn, count=count, 
-                               reverse=reverse,
-                               wrap=default_thing_wrapper())
-        listing = ModActionListing(builder)
-        pane = listing.listing()
-        return pane
-
-    @paginated_listing(max_page_size=500, backend='cassandra')
-    @validate(mod=VAccountByName('mod'),
-              action=VOneOf('type', ModAction.actions))
-    def GET_moderationlog(self, num, after, reverse, count, mod, action):
-        if not c.user_is_loggedin:
-            return self.abort404()
-
-        if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
-            if isinstance(c.site, ModSR):
-                srs = Subreddit._byID(c.site.sr_ids(), return_dict=False)
-            else:
-                srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
-
-            # check that user is mod on all requested srs
-            if not Subreddit.user_mods_all(c.user, srs) and not c.user_is_admin:
-                return self.abort404()
-
-            # grab all moderators
-            mod_ids = set(Subreddit.get_all_mod_ids(srs))
-            mods = Account._byID(mod_ids, data=True)
-
-            pane = self._make_moderationlog(srs, num, after, reverse, count,
-                                            mod=mod, action=action)
-        elif isinstance(c.site, FakeSubreddit):
-            return self.abort404()
-        else:
-            if not c.site.is_moderator(c.user) and not c.user_is_admin:
-                return self.abort404()
-            mod_ids = c.site.moderators
-            mods = Account._byID(mod_ids, data=True)
-
-            pane = self._make_moderationlog(c.site, num, after, reverse, count,
-                                            mod=mod, action=action)
-
-        panes = PaneStack()
-        panes.append(pane)
-
-        action_buttons = [NavButton(_('all'), None, opt='type', css_class='primary')]
-        for a in ModAction.actions:
-            action_buttons.append(NavButton(ModAction._menu[a], a, opt='type'))
-        
-        mod_buttons = [NavButton(_('all'), None, opt='mod', css_class='primary')]
-        for mod_id in mod_ids:
-            mod = mods[mod_id]
-            mod_buttons.append(NavButton(mod.name, mod.name, opt='mod'))
-        base_path = request.path
-        menus = [NavMenu(action_buttons, base_path=base_path, 
-                         title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
-                NavMenu(mod_buttons, base_path=base_path, 
-                        title=_('filter by moderator'), type='lightdrop')]
-        return EditReddit(content=panes, nav_menus=menus,
-                          extension_handling=False).render()
 
     def _make_spamlisting(self, location, num, after, reverse, count):
         if location == 'reports':
@@ -489,7 +580,7 @@ class FrontController(RedditController):
 
         return pane
 
-    def _edit_modcontrib_reddit(self, location, num, after, reverse, count, created):
+    def _edit_modcontrib_sciteit(self, location, num, after, reverse, count, created):
         extension_handling = False
 
         if not c.user_is_loggedin:
@@ -514,26 +605,26 @@ class FrontController(RedditController):
         else:
             return self.abort404()
 
-        return EditReddit(content = pane,
+        return EditSciteit(content = pane,
                           extension_handling = extension_handling).render()
 
-    def _edit_normal_reddit(self, location, num, after, reverse, count, created,
+    def _edit_normal_sciteit(self, location, num, after, reverse, count, created,
                             name, user):
-        # moderator is either reddit's moderator or an admin
+        # moderator is either sciteit's moderator or an admin
         is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
         extension_handling = False
         if is_moderator and location == 'edit':
             pane = PaneStack()
             if created == 'true':
                 pane.append(InfoBar(message = strings.sr_created))
-            pane.append(CreateSubreddit(site = c.site))
+            pane.append(CreateSubsciteit(site = c.site))
         elif location == 'moderators':
             pane = ModList(editable = is_moderator)
         elif is_moderator and location == 'banned':
             pane = BannedList(editable = is_moderator)
         elif (location == 'contributors' and
-              # On public reddits, only moderators can see the whitelist.
-              # On private reddits, all contributors can see each other.
+              # On public sciteits, only moderators can see the whitelist.
+              # On private sciteits, all contributors can see each other.
               (c.site.type != 'public' or
                (c.user_is_loggedin and
                 (c.site.is_moderator(c.user) or c.user_is_admin)))):
@@ -547,24 +638,24 @@ class FrontController(RedditController):
                 stylesheet_contents = c.site.stylesheet_contents
             else:
                 stylesheet_contents = ''
-            pane = SubredditStylesheet(site = c.site,
+            pane = SubsciteitStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
         elif location in ('reports', 'spam', 'trials', 'modqueue') and is_moderator:
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
         elif is_moderator and location == 'traffic':
-            pane = RedditTraffic()
+            pane = SciteitTraffic()
         elif is_moderator and location == 'flair':
             pane = FlairPane(num, after, reverse, name, user)
         elif c.user_is_sponsor and location == 'ads':
-            pane = RedditAds()
+            pane = SciteitAds()
         elif (not location or location == "about") and is_api():
-            return Reddit(content = Wrapped(c.site)).render()
+            return Sciteit(content = Wrapped(c.site)).render()
         else:
             return self.abort404()
 
-        return EditReddit(content = pane,
+        return EditSciteit(content = pane,
                           extension_handling = extension_handling).render()
 
     @base_listing
@@ -572,9 +663,9 @@ class FrontController(RedditController):
               created = VOneOf('created', ('true','false'),
                                default = 'false'),
               name = nop('name'))
-    def GET_editreddit(self, location, num, after, reverse, count, created,
+    def GET_editsciteit(self, location, num, after, reverse, count, created,
                        name):
-        """Edit reddit form."""
+        """Edit sciteit form."""
         user = None
         if name:
             try:
@@ -582,15 +673,15 @@ class FrontController(RedditController):
             except NotFound:
                 c.errors.add(errors.USER_DOESNT_EXIST, field='name')
         if isinstance(c.site, ModContribSR):
-            return self._edit_modcontrib_reddit(location, num, after, reverse,
+            return self._edit_modcontrib_sciteit(location, num, after, reverse,
                                                 count, created)
         elif isinstance(c.site, AllSR) and c.user_is_admin:
-            return self._edit_modcontrib_reddit(location, num, after, reverse,
+            return self._edit_modcontrib_sciteit(location, num, after, reverse,
                                                 count, created)
-        elif isinstance(c.site, FakeSubreddit):
+        elif isinstance(c.site, FakeSubsciteit):
             return self.abort404()
         else:
-            return self._edit_normal_reddit(location, num, after, reverse,
+            return self._edit_normal_sciteit(location, num, after, reverse,
                                             count, created, name, user)
 
 
@@ -607,6 +698,7 @@ class FrontController(RedditController):
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query."""
+	print "Searching for |%s|" % article.title
 
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
@@ -650,14 +742,14 @@ class FrontController(RedditController):
 
     @base_listing
     @validate(query = nop('q'))
-    def GET_search_reddits(self, query, reverse, after,  count, num):
-        """Search reddits by title and description."""
-        q = SubredditSearchQuery(query)
+    def GET_search_sciteits(self, query, reverse, after,  count, num):
+        """Search sciteits by title and description."""
+        q = SubsciteitSearchQuery(query)
 
         num, t, spane = self._search(q, num = num, reverse = reverse,
                                      after = after, count = count)
         
-        res = SubredditsPage(content=spane,
+        res = SubsciteitsPage(content=spane,
                              prev_search = query,
                              elapsed_time = t,
                              num_results = num,
@@ -680,17 +772,21 @@ class FrontController(RedditController):
                 return self.redirect("/submit" + query_string({'url':url}))
 
         if not restrict_sr:
-            site = DefaultSR()
+        #    site = DefaultSR()
+            site = []
         else:
             site = c.site
 
         try:
             cleanup_message = None
             try:
-                q = IndextankQuery(query, site, sort)
+                #q = IndextankQuery(query, site, sort)
+		#q = UserSearchQuery(query,"75%",types=[Comment,Link])
+		q = LinkSearchQuery(q=query,langs = set(['en']),subsciteits=site)
                 num, t, spane = self._search(q, num=num, after=after, 
                                              reverse = reverse, count = count)
-            except InvalidIndextankQuery:
+            #except InvalidIndextankQuery:
+	    except SolrError: 
                 # strip the query down to a whitelist
                 cleaned = re.sub("[^\w\s]+", "", query)
                 cleaned = cleaned.lower()
@@ -700,7 +796,8 @@ class FrontController(RedditController):
                     num, t, spane = 0, 0, []
                     cleanup_message = strings.completely_invalid_search_query
                 else:
-                    q = IndextankQuery(cleaned, site, sort)
+                    #q = IndextankQuery(cleaned, site, sort)
+		    q = SubsciteitSearchQuery(query,sort=sort)
                     num, t, spane = self._search(q, num=num, after=after, 
                                                  reverse=reverse, count=count)
                     cleanup_message = strings.invalid_search_query % {
@@ -715,7 +812,7 @@ class FrontController(RedditController):
                              restrict_sr=restrict_sr).render()
 
             return res
-        except (IndextankException, socket.error), e:
+        except (SolrError, socket.error), e:
             return self.search_fail(e)
 
     def _search(self, query_obj, num, after, reverse, count=0):
@@ -733,7 +830,7 @@ class FrontController(RedditController):
         # computed after fetch_more
         try:
             res = listing.listing()
-        except (IndextankException, SolrError, socket.error), e:
+        except (SolrError, socket.error), e:
             return self.search_fail(e)
         timing = time_module.time() - builder.start_time
 
@@ -742,7 +839,7 @@ class FrontController(RedditController):
     @validate(VAdmin(),
               comment = VCommentByID('comment_id'))
     def GET_comment_by_id(self, comment):
-        href = comment.make_permalink_slow(context=5, anchor=True)
+        href = comment.make_permalink_slow(context=5, anchor=True,criticism=comment.criticism)
         return self.redirect(href)
 
     @validate(url = VRequired('url', None),
@@ -750,8 +847,7 @@ class FrontController(RedditController):
               then = VOneOf('then', ('tb','comments'), default = 'comments'))
     def GET_submit(self, url, title, then):
         """Submit form."""
-        resubmit = request.get.get('resubmit')
-        if url and not resubmit:
+        if url and not request.get.get('resubmit'):
             # check to see if the url has already been submitted
             links = link_from_url(url)
             if links and len(links) == 1:
@@ -771,16 +867,15 @@ class FrontController(RedditController):
             abort(403, "forbidden")
 
         captcha = Captcha() if c.user.needs_captcha() else None
-        sr_names = (Subreddit.submit_sr_names(c.user) or
-                    Subreddit.submit_sr_names(None))
+        sr_names = (Subsciteit.submit_sr_names(c.user) or
+                    Subsciteit.submit_sr_names(None))
 
         return FormPage(_("submit"),
                         show_sidebar = True,
                         content=NewLink(url=url or '',
                                         title=title or '',
-                                        subreddits = sr_names,
+                                        subsciteits = sr_names,
                                         captcha=captcha,
-                                        resubmit=resubmit,
                                         then = then)).render()
 
     def GET_frame(self):
@@ -788,14 +883,14 @@ class FrontController(RedditController):
         puts the proper url as the frame source"""
         sub_domain = request.environ.get('sub_domain')
         original_path = request.environ.get('original_path')
-        sr = Subreddit._by_domain(sub_domain)
+        sr = Subsciteit._by_domain(sub_domain)
         return Cnameframe(original_path, sr, sub_domain).render()
 
 
     def GET_framebuster(self, what = None, blah = None):
         """
         renders the contents of the iframe which, on a cname, checks
-        if the user is currently logged into reddit.
+        if the user is currently logged into sciteit.
         
         if this page is hit from the primary domain, redirects to the
         cnamed domain version of the site.  If the user is logged in,
@@ -816,7 +911,7 @@ class FrontController(RedditController):
             if c.user_is_loggedin:
                 path += "login/"
             u = UrlParser(path + str(random.random()))
-            u.mk_cname(require_frame = False, subreddit = c.site,
+            u.mk_cname(require_frame = False, subsciteit = c.site,
                        port = request.port)
             return self.redirect(u.unparse())
         # the user is not logged in or there is no cname.
@@ -856,14 +951,14 @@ class FrontController(RedditController):
     @validate(VSponsorAdmin())
     def GET_site_traffic(self):
         return BoringPage("traffic",
-                          content = RedditTraffic()).render()
+                          content = SciteitTraffic()).render()
 
     @validate(VUser())
     def GET_account_activity(self):
         return AccountActivityPage().render()
 
 
-class FormsController(RedditController):
+class FormsController(SciteitController):
 
     def GET_password(self):
         """The 'what is my password' page"""
@@ -983,7 +1078,7 @@ class FormsController(RedditController):
                                        dict(link="/help/deputies"),
                                    extra_class="mellow"))
 
-        return Reddit(content = displayPane).render()
+        return Sciteit(content = displayPane).render()
 
     @validate(VUser(),
               location = nop("location"))
@@ -1110,12 +1205,12 @@ class FormsController(RedditController):
     @validate(VUser(),
               secret=VPrintable("secret", 50))
     def GET_thanks(self, secret):
-        """The page to claim reddit gold trophies"""
+        """The page to claim sciteit gold trophies"""
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
 
     @validate(VUser(),
               goldtype = VOneOf("goldtype",
-                                ("autorenew", "onetime", "creddits", "gift")),
+                                ("autorenew", "onetime", "csciteits", "gift")),
               period = VOneOf("period", ("monthly", "yearly")),
               months = VInt("months"),
               # variables below are just for gifts
@@ -1129,7 +1224,7 @@ class FormsController(RedditController):
         if goldtype == "autorenew":
             if period is None:
                 start_over = True
-        elif goldtype in ("onetime", "creddits"):
+        elif goldtype in ("onetime", "csciteits"):
             if months is None or months < 1:
                 start_over = True
         elif goldtype == "gift":
@@ -1144,7 +1239,7 @@ class FormsController(RedditController):
             start_over = True
 
         if start_over:
-            return BoringPage(_("reddit gold"),
+            return BoringPage(_("sciteit gold"),
                               show_sidebar = False,
                               content=Gold(goldtype, period, months, signed,
                                            recipient, recipient_name)).render()
@@ -1166,7 +1261,7 @@ class FormsController(RedditController):
 
             g.log.info("just set payment_blob-%s" % passthrough)
 
-            return BoringPage(_("reddit gold"),
+            return BoringPage(_("sciteit gold"),
                               show_sidebar = False,
                               content=GoldPayment(goldtype, period, months,
                                                   signed, recipient,

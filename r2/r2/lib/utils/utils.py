@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -32,7 +32,6 @@ from BeautifulSoup import BeautifulSoup
 
 from time import sleep
 from datetime import datetime, timedelta
-from pylons import g
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
 from mako.filters import url_escape
@@ -336,7 +335,7 @@ def trunc_time(time, mins, hours=None):
                         microsecond = 0)
 
 def long_datetime(datetime):
-    return datetime.astimezone(g.tz).ctime() + " " + str(g.tz)
+    return datetime.ctime() + " GMT"
 
 def median(l):
     if l:
@@ -372,8 +371,8 @@ class UrlParser(object):
     correspondingly updated vi update_query).  The extension of the
     path can also be set and queried.
 
-    The class also contains reddit-specific functions for setting,
-    checking, and getting a path's subreddit.  It also can convert
+    The class also contains sciteit-specific functions for setting,
+    checking, and getting a path's subsciteit.  It also can convert
     paths between in-frame and out of frame cname'd forms.
 
     """
@@ -472,63 +471,63 @@ class UrlParser(object):
                            self.path.replace('//', '/'),
                            self.params, q, self.fragment))
 
-    def path_has_subreddit(self):
+    def path_has_subsciteit(self):
         """
         utility method for checking if the path starts with a
-        subreddit specifier (namely /r/ or /reddits/).
+        subsciteit specifier (namely /r/ or /sciteits/).
         """
         return (self.path.startswith('/r/') or
-                self.path.startswith('/reddits/'))
+                self.path.startswith('/sciteits/'))
 
-    def get_subreddit(self):
-        """checks if the current url refers to a subreddit and returns
-        that subreddit object.  The cases here are:
+    def get_subsciteit(self):
+        """checks if the current url refers to a subsciteit and returns
+        that subsciteit object.  The cases here are:
 
           * the hostname is unset or is g.domain, in which case it
-            looks for /r/XXXX or /reddits.  The default in this case
+            looks for /r/XXXX or /sciteits.  The default in this case
             is Default.
-          * the hostname is a cname to a known subreddit.
+          * the hostname is a cname to a known subsciteit.
 
-        On failure to find a subreddit, returns None.
+        On failure to find a subsciteit, returns None.
         """
         from pylons import g
-        from r2.models import Subreddit, Sub, NotFound, DefaultSR
+        from r2.models import Subsciteit, Sub, NotFound, DefaultSR
         try:
             if not self.hostname or self.hostname.startswith(g.domain):
                 if self.path.startswith('/r/'):
-                    return Subreddit._by_name(self.path.split('/')[2])
-                elif self.path.startswith('/reddits/'):
+                    return Subsciteit._by_name(self.path.split('/')[2])
+                elif self.path.startswith('/sciteits/'):
                     return Sub
                 else:
                     return DefaultSR()
             elif self.hostname:
-                return Subreddit._by_domain(self.hostname)
+                return Subsciteit._by_domain(self.hostname)
         except NotFound:
             pass
         return None
 
-    def is_reddit_url(self, subreddit = None):
+    def is_sciteit_url(self, subsciteit = None):
         """utility method for seeing if the url is associated with
-        reddit as we don't necessarily want to mangle non-reddit
+        sciteit as we don't necessarily want to mangle non-sciteit
         domains
 
         returns true only if hostname is nonexistant, a subdomain of
-        g.domain, or a subdomain of the provided subreddit's cname.
+        g.domain, or a subdomain of the provided subsciteit's cname.
         """
         from pylons import g
         return (not self.hostname or
                 is_subdomain(self.hostname, g.domain) or
                 is_authorized_cname(self.hostname, g.authorized_cnames) or
-                (subreddit and subreddit.domain and
-                 is_subdomain(self.hostname, subreddit.domain)))
+                (subsciteit and subsciteit.domain and
+                 is_subdomain(self.hostname, subsciteit.domain)))
 
-    def path_add_subreddit(self, subreddit):
+    def path_add_subsciteit(self, subsciteit):
         """
-        Adds the subreddit's path to the path if another subreddit's
+        Adds the subsciteit's path to the path if another subsciteit's
         prefix is not already present.
         """
-        if not self.path_has_subreddit():
-            self.path = (subreddit.path + self.path)
+        if not self.path_has_subsciteit():
+            self.path = (subsciteit.path + self.path)
         return self
 
     @property
@@ -543,7 +542,7 @@ class UrlParser(object):
             return self.hostname + ":" + str(self.port)
         return self.hostname
 
-    def mk_cname(self, require_frame = True, subreddit = None, port = None):
+    def mk_cname(self, require_frame = True, subsciteit = None, port = None):
         """
         Converts a ?cnameframe url into the corresponding cnamed
         domain if applicable.  Useful for frame-busting on redirect.
@@ -553,23 +552,23 @@ class UrlParser(object):
         if require_frame and not self.query_dict.has_key(self.cname_get):
             return self
 
-        # fetch the subreddit and make sure it 
-        subreddit = subreddit or self.get_subreddit()
-        if subreddit and subreddit.domain:
+        # fetch the subsciteit and make sure it 
+        subsciteit = subsciteit or self.get_subsciteit()
+        if subsciteit and subsciteit.domain:
 
             # no guarantee there was a scheme
             self.scheme = self.scheme or "http"
 
             # update the domain (preserving the port)
-            self.hostname = subreddit.domain
+            self.hostname = subsciteit.domain
             self.port = self.port or port
 
             # and remove any cnameframe GET parameters
             if self.query_dict.has_key(self.cname_get):
                 del self._query_dict[self.cname_get]
 
-            # remove the subreddit reference
-            self.path = lstrips(self.path, subreddit.path)
+            # remove the subsciteit reference
+            self.path = lstrips(self.path, subsciteit.path)
             if not self.path.startswith('/'):
                 self.path = '/' + self.path
 
@@ -593,13 +592,13 @@ class UrlParser(object):
 
     def domain_permutations(self, fragments=False, subdomains=True):
         """
-          Takes a domain like `www.reddit.com`, and returns a list of ways
+          Takes a domain like `www.sciteit.com`, and returns a list of ways
           that a user might search for it, like:
           * www
-          * reddit
+          * sciteit
           * com
-          * www.reddit.com
-          * reddit.com
+          * www.sciteit.com
+          * sciteit.com
           * com
         """
         ret = set()
@@ -692,7 +691,7 @@ def unicode_safe(res):
         return str(res)
     except UnicodeEncodeError:
         try:
-            return unicode(res).encode('utf-8')
+            return unicode(res).encode('utf-8','replace')
         except UnicodeEncodeError:
             return res.decode('utf-8').encode('utf-8')
 
@@ -791,12 +790,12 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             items = list(query)
 
 def fix_if_broken(thing, delete = True, fudge_links = False):
-    from r2.models import Link, Comment, Subreddit, Message
+    from r2.models import Link, Comment, Subsciteit, Message
 
     # the minimum set of attributes that are required
     attrs = dict((cls, cls._essentials)
                  for cls
-                 in (Link, Comment, Subreddit, Message))
+                 in (Link, Comment, Subsciteit, Message))
 
     if thing.__class__ not in attrs:
         raise TypeError
@@ -864,6 +863,25 @@ def find_recent_broken_things(from_time = None, to_time = None,
         for thing in fetch_things2(q):
             fix_if_broken(thing, delete = delete)
 
+def get_sr_rss():
+    """Uses fetch_things2 to get all the subsciteits and there rss feeds"""
+    from r2.models import Subsciteit,FakeSubsciteit
+    srs = [sr for sr in fetch_things2(Subsciteit._query()) if not isinstance(sr,FakeSubsciteit)]
+    return dict((sr.name,sr.rss_source) for sr in srs)
+    
+def build_sr_tree(root_id):
+    """Builds the tree below this point."""
+    from r2.models import Subsciteit
+    tree=[root_id]
+    undone=Subsciteit._byID(root_id).children
+    while undone:
+        tree.extend(undone)
+	tmp=Subsciteit._byID(undone)
+	undone=[]
+	for k in tmp:
+	    if tmp[k].children:
+	        undone.extend(tmp[k].children)
+    return tree
 
 def timeit(func):
     "Run some function, and return (RunTimeInSeconds,Result)"
@@ -973,7 +991,7 @@ def interleave_lists(*args):
 
 def link_from_url(path, filter_spam = False, multiple = True):
     from pylons import c
-    from r2.models import IDBuilder, Link, Subreddit, NotFound
+    from r2.models import IDBuilder, Link, Subsciteit, NotFound
 
     if not path:
         return
@@ -990,7 +1008,7 @@ def filter_links(links, filter_spam = False, multiple = True):
     # run the list through a builder to remove any that the user
     # isn't allowed to see
     from pylons import c
-    from r2.models import IDBuilder, Link, Subreddit, NotFound
+    from r2.models import IDBuilder, Link, Subsciteit, NotFound
     links = IDBuilder([link._fullname for link in links],
                       skip = False).get_items()[0]
     if not links:
@@ -1005,7 +1023,7 @@ def filter_links(links, filter_spam = False, multiple = True):
 
     # if it occurs in one or more of their subscriptions, show them
     # that one first
-    subs = set(Subreddit.user_subreddits(c.user, limit = None))
+    subs = set(Subsciteit.user_subsciteits(c.user, limit = None))
     def cmp_links(a, b):
         if a.sr_id in subs and b.sr_id not in subs:
             return -1

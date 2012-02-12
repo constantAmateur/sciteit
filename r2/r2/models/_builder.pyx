@@ -1,6 +1,6 @@
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
-from r2.lib.comment_tree import link_comments, link_comments_and_sort, tree_sort_fn, MAX_ITERATIONS
+from r2.lib.comment_tree import link_comments, link_comments_and_sort, tree_sort_fn, MAX_ITERATIONS,get_bestresponses
 from r2.models.link import *
 from r2.lib.db import operators
 from r2.lib import utils
@@ -9,6 +9,9 @@ class _CommentBuilder(Builder):
     def __init__(self, link, sort, comment = None, context = None,
                  load_more=True, continue_this_thread=True,
                  max_depth = MAX_RECURSION, **kw):
+        self.critpage = False
+        #if kw.has_key('critpage'):
+        #    self.critpage = kw.pop('critpage')
         Builder.__init__(self, **kw)
         self.link = link
         self.comment = comment
@@ -32,6 +35,7 @@ class _CommentBuilder(Builder):
         cdef dict parents
         cdef dict sorter
 
+        ror = get_bestresponses(self.link._id)
         r = link_comments_and_sort(self.link._id, self.sort.col)
         cids, cid_tree, depth, num_children, parents, sorter = r
 
@@ -118,6 +122,10 @@ class _CommentBuilder(Builder):
                             request.fullpath)
                 return []
         candidates.sort(key = sorter.get, reverse = self.rev_sort)
+        wo=[c for c in candidates if not c in ror]
+        w=[c for c in candidates if c in ror]
+        w.extend(wo)
+        candidates=w
 
         debug_dict["candidates_Before"] = repr(candidates)
         while num_have < num and candidates:
@@ -130,6 +138,10 @@ class _CommentBuilder(Builder):
                     candidates.extend([x for x in cid_tree[to_add]
                                        if sorter.get(x) is not None])
                     candidates.sort(key = sorter.get, reverse = self.rev_sort)
+                    wo=[c for c in candidates if not c in ror]
+                    w=[c for c in candidates if c in ror]
+                    w.extend(wo)
+                    candidates=w
                 items.append(to_add)
                 num_have += 1
             elif self.continue_this_thread:
@@ -148,8 +160,12 @@ class _CommentBuilder(Builder):
 
         # items is a list of things we actually care about so load them
         items = Comment._byID(items, data = True, return_dict = False, stale=self.stale)
+        #Throw them out if they are criticisms or comments depending on the page...
+        if self.critpage:
+            items = [item for item in items if item.criticism]
+        else:
+            items = [item for item in items if not item.criticism]
         cdef list wrapped = self.wrap_items(items)
-
 
         # break here
         # -----
@@ -284,8 +300,8 @@ class _MessageBuilder(Builder):
                 return True
 
         # m is wrapped at this time, so it should have an SR
-        subreddit = getattr(m, "subreddit", None)
-        if subreddit and subreddit.is_moderator(c.user):
+        subsciteit = getattr(m, "subsciteit", None)
+        if subsciteit and subsciteit.is_moderator(c.user):
             return True
 
         return False

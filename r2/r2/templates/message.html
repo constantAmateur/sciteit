@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -62,10 +62,10 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
    taglinetext = taglinetext.replace(' ', '&nbsp;')
    author = WrappedUser(thing.author, thing.attribs, thing).render()
    if thing.sr_id:
-     updated_author = _("%(author)s via %(subreddit)s").replace(' ', '&nbsp;')
-     subreddit = '<a href="%s">%s</a>' % (thing.subreddit.path, 
-                                          thing.subreddit.name)
-     author = updated_author % dict(author = author, subreddit = subreddit)
+     updated_author = _("%(author)s via %(subsciteit)s").replace(' ', '&nbsp;')
+     subsciteit = '<a href="%s">%s</a>' % (thing.subsciteit.path, 
+                                          thing.subsciteit.name)
+     author = updated_author % dict(author = author, subsciteit = subsciteit)
   %>
   ${unsafe(taglinetext % dict(when = thing.timesince, 
                               author= u"<b>%s</b>" % author,
@@ -80,9 +80,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
   <p class="subject">
     %if getattr(thing, "is_parent", False):
        %if thing.sr_id:
-         <span class="correspondent reddit rounded">
-           <a href="${thing.subreddit.path}message/moderator/inbox">
-             #${thing.subreddit.name}
+         <span class="correspondent sciteit rounded">
+           <a href="${thing.subsciteit.path}message/moderator/inbox">
+             #${thing.subsciteit.name}
            </a>
          </span>
        %else:

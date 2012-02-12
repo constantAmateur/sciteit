@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -50,18 +50,17 @@ def make_map(global_conf={}, app_conf={}):
     mc('/account-activity', controller='front', action='account_activity')
 
     mc('/about/message/:where', controller='message', action='listing')
-    mc('/about/log', controller='front', action='moderationlog')
     mc('/about/:location', controller='front', 
-       action='editreddit', location = 'about')
+       action='editsciteit', location = 'about')
 
-    mc('/reddits/create', controller='front', action='newreddit')
-    mc('/reddits/search', controller='front', action='search_reddits')
-    mc('/reddits/login', controller='forms', action='login')
-    mc('/reddits/:where', controller='reddits', action='listing',
+    mc('/sciteits/create', controller='front', action='newsciteit')
+    mc('/sciteits/search', controller='front', action='search_sciteits')
+    mc('/sciteits/login', controller='forms', action='login')
+    mc('/sciteits/:where', controller='sciteits', action='listing',
        where = 'popular',
        requirements=dict(where="popular|new|banned"))
 
-    mc('/reddits/mine/:where', controller='myreddits', action='listing',
+    mc('/sciteits/mine/:where', controller='mysciteits', action='listing',
        where='subscriber',
        requirements=dict(where='subscriber|contributor|moderator'))
 
@@ -80,9 +79,13 @@ def make_map(global_conf={}, app_conf={}):
     mc('/awards', controller='front', action='awards')
 
     mc('/i18n', controller='redirect', action='redirect',
-       dest='http://www.reddit.com/r/i18n')
+       dest='http://www.sciteit.com/r/r18n')
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
+
+    mc('/admin/i18n', controller='i18n', action='list')
+    mc('/admin/i18n/:action', controller='i18n')
+    mc('/admin/i18n/:action/:lang', controller='i18n')
 
     mc('/admin/usage', controller='usage')
 
@@ -103,7 +106,6 @@ def make_map(global_conf={}, app_conf={}):
        where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
-    mc('/u/:username', controller='redirect', action='user_redirect')
 
     mc('/prefs/:location', controller='forms',
        action='prefs', location='options')
@@ -123,6 +125,8 @@ def make_map(global_conf={}, app_conf={}):
        action = 'traffic', title=None)
     mc('/comments/:article/:title/:comment', controller='front', 
        action = 'comments', title=None, comment = None)
+    #mc('/criticisms/:article/:title/:comment', controller='front', 
+    #   action = 'criticisms', title=None, comment = None)
     mc('/duplicates/:article/:title', controller = 'front',
        action = 'duplicates', title=None)
 
@@ -147,6 +151,9 @@ def make_map(global_conf={}, app_conf={}):
        sort = "")
 
     mc('/health', controller='health', action='health')
+    mc('/health/:action', controller='health',
+       requirements=dict(action="threads|dump|sleep"))
+    mc('/shutdown', controller='health', action='shutdown')
 
     mc('/', controller='hot', action='listing')
 
@@ -175,9 +182,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
-    mc('/:action', controller='embed',
-       requirements=dict(action="help|blog|faq"))
-    mc('/help/*anything', controller='embed', action='help')
+    #mc('/:action', controller='embed',
+    #   requirements=dict(action="help|blog|faq"))
+    mc('/help/:what', controller='help', action='index',what='help')
 
     mc('/goto', controller='toolbar', action='goto')
     mc('/tb/:id', controller='toolbar', action='tb')
@@ -205,9 +212,11 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
 
     mc('/api/distinguish/:how', controller='api', action="distinguish")
+    #mc('/api/nominate/:how', controller='api', action='nominate')
+    mc('/api/bestresponse/:how', controller='api', action='bestresponse')
     # wherever this is, google has to agree.
     mc('/api/gcheckout', controller='ipn', action='gcheckout')
-    mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
+    mc('/api/spendcsciteits', controller='ipn', action="spendcsciteits")
     mc('/api/ipn/:secret', controller='ipn', action='ipn')
     mc('/ipn/:secret',     controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',
@@ -233,19 +242,19 @@ def make_map(global_conf={}, app_conf={}):
     mc('/doquery', controller='query', action='doquery')
 
     mc('/store', controller='redirect', action='redirect',
-       dest='http://store.reddit.com/index.html')
+       dest='http://store.sciteit.com/index.html')
 
     mc('/code', controller='redirect', action='redirect',
-       dest='http://github.com/reddit/')
+       dest='http://github.com/sciteit/')
 
     mc('/mobile', controller='redirect', action='redirect',
-       dest='http://m.reddit.com/')
+       dest='http://m.sciteit.com/')
 
     mc('/authorize_embed', controller = 'front', action = 'authorize_embed')
 
     # Used for showing ads
     mc("/ads/", controller = "ad", action = "ad")
-    mc("/ads/r/:reddit_name/:keyword", controller = "ad", action = "ad", keyword=None)
+    mc("/ads/r/:sciteit_name/:keyword", controller = "ad", action = "ad", keyword=None)
     mc("/ads/:codename", controller = "ad", action = "ad_by_codename")
 
     mc("/try", controller = "forms", action = "try_compact")
@@ -261,7 +270,7 @@ def make_map(global_conf={}, app_conf={}):
 
     # these should be near the buttom, because they should only kick
     # in if everything else fails. It's the attempted catch-all
-    # reddit.com/http://... and reddit.com/34fr, but these redirect to
+    # sciteit.com/http://... and sciteit.com/34fr, but these redirect to
     # the less-guessy versions at /s/ and /tb/
     mc('/:linkoid', controller='toolbar', action='linkoid',
        requirements=dict(linkoid='[0-9a-z]{1,6}'))

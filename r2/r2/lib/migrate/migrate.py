@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,17 +20,17 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 """
-One-time use functions to migrate from one reddit-version to another
+One-time use functions to migrate from one sciteit-version to another
 """
 from r2.lib.promote import *
 
 def add_allow_top_to_srs():
-    "Add the allow_top property to all stored subreddits"
-    from r2.models import Subreddit
+    "Add the allow_top property to all stored subsciteits"
+    from r2.models import Subsciteit
     from r2.lib.db.operators import desc
     from r2.lib.utils import fetch_things2
 
-    q = Subreddit._query(Subreddit.c._spam == (True,False),
+    q = Subsciteit._query(Subsciteit.c._spam == (True,False),
                          sort = desc('_date'))
     for sr in fetch_things2(q):
         sr.allow_top = True; sr._commit()
@@ -38,10 +38,10 @@ def add_allow_top_to_srs():
 def subscribe_to_blog_and_annoucements(filename):
     import re
     from time import sleep
-    from r2.models import Account, Subreddit
+    from r2.models import Account, Subsciteit
 
-    r_blog = Subreddit._by_name("blog")
-    r_announcements = Subreddit._by_name("announcements")
+    r_blog = Subsciteit._by_name("blog")
+    r_announcements = Subsciteit._by_name("announcements")
 
     contents = file(filename).read()
     numbers = [ int(s) for s in re.findall("\d+", contents) ]
@@ -137,13 +137,13 @@ def pushup_permacache(verbosity=1000):
        push everything up into the rest of the chain, so this is
        everything that uses the permacache, as of that check-in."""
     from pylons import g
-    from r2.models import Link, Subreddit, Account
+    from r2.models import Link, Subsciteit, Account
     from r2.lib.db.operators import desc
     from r2.lib.comment_tree import comments_key, messages_key
     from r2.lib.utils import fetch_things2, in_chunks
     from r2.lib.utils import last_modified_key
     from r2.lib.promote import promoted_memo_key
-    from r2.lib.subreddit_search import load_all_reddits
+    from r2.lib.subsciteit_search import load_all_sciteits
     from r2.lib.db import queries
     from r2.lib.cache import CassandraCacheChain
 
@@ -159,7 +159,7 @@ def pushup_permacache(verbosity=1000):
         yield promoted_memo_key
 
         # just let this one do its own writing
-        load_all_reddits()
+        load_all_sciteits()
 
         yield queries.get_all_comments().iden
 
@@ -196,7 +196,7 @@ def pushup_permacache(verbosity=1000):
             yield queries.get_unread_selfreply(account).iden
             yield queries.get_sent(account).iden
 
-        sr_q = Subreddit._query(Subreddit.c._spam == (True, False),
+        sr_q = Subsciteit._query(Subsciteit.c._spam == (True, False),
                                 sort=desc('_date'),
                                 )
         for sr in fetch_things2(sr_q, verbosity):
@@ -212,8 +212,8 @@ def pushup_permacache(verbosity=1000):
             yield queries.get_spam_comments(sr).iden
             yield queries.get_reported_links(sr).iden
             yield queries.get_reported_comments(sr).iden
-            yield queries.get_subreddit_messages(sr).iden
-            yield queries.get_unread_subreddit_messages(sr).iden
+            yield queries.get_subsciteit_messages(sr).iden
+            yield queries.get_unread_subsciteit_messages(sr).iden
 
     done = 0
     for keys in in_chunks(gen_keys(), verbosity):

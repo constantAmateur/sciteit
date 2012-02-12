@@ -3,7 +3,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -13,7 +13,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -69,24 +69,24 @@ setup(
         "pycrypto",
         "Babel>=0.9.1",
         "cython>=0.14",
-        "SQLAlchemy==0.7.4",
+        "SQLAlchemy==0.5.3",
         "BeautifulSoup",
         "cssutils==0.9.5.1",
         "chardet",
         "psycopg2",
         "pycountry",
-        "pycassa>=1.1.0,<=1.4.0",
+        "pycassa==1.1.0",
         "PIL",
         "pycaptcha",
         "amqplib",
         "pylibmc==1.2.1-dev",
         "py-bcrypt",
-        "python-statsd",
         "snudown",
+        "python-statsd",
     ],
     dependency_links=[
         "https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev",
-        "https://nodeload.github.com/reddit/snudown/tarball/v1.0.2#egg=snudown-1.0.4",
+        "https://nodeload.github.com/reddit/snudown/tarball/v1.0.0#egg=snudown-1.0.0",
     ],
     packages=find_packages(exclude=["ez_setup"]),
     cmdclass=commands,

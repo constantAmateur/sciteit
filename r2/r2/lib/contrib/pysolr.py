@@ -99,7 +99,7 @@ document 5
 NOTE: PySolr is an open-source Python module
 <http://code.google.com/p/pysolr/> that falls under the New BSD
 Licence <http://www.opensource.org/licenses/bsd-license.php>, NOT the
-licence covering the rest of Reddit. Reddit's modifications to this
+licence covering the rest of Sciteit. Sciteit's modifications to this
 module also fall under the New BSD Licence. The New BSD Licence
 requires that re-distributions of the source, modified or not, display
 the original copyright notice, but PySolr does not, as of import-time,
@@ -280,7 +280,7 @@ class Solr(object):
         message = ElementTree.Element('add')
         for doc in docs:
             message.append(doc_to_elemtree(doc))
-        m = ElementTree.tostring(message)
+        m = ElementTree.tostring(message,encoding='utf8')
         response = self._update(m)
         if response.status != 200:
             raise SolrError(self._extract_error(response))

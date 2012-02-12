@@ -31,7 +31,7 @@
                     var y = x[j].split('=');
                     if (y[0] == 'adId') {
                       s = url[0] + "?" + x[j];
-                      a.href = "http://ads.reddit.com/submit?url=" + encodeURIComponent(s);
+                      a.href = "http://ads.sciteit.com/submit?url=" + encodeURIComponent(s);
                       return true;
                     }
                  }
@@ -44,7 +44,7 @@
           }
         }
         if (!s) s = ad.getElementsByTagName("img")[0]
-        if (s) a.href = "http://ads.reddit.com/submit?url=" + encodeURIComponent(s.src);
+        if (s) a.href = "http://ads.sciteit.com/submit?url=" + encodeURIComponent(s.src);
         else a.target = ""
         return true;
       }
@@ -64,7 +64,7 @@ document.write('<script language="JavaScript" src="http://ad.doubleclick.net/adj
     </div>
     <div id="adlink">
       <a target="_top" href="#" onmousedown="rwt(this)">
-        ${_("reddit this ad")}
+        ${_("sciteit this ad")}
       </a>
     </div>
     <script language="JavaScript" type="text/javascript">

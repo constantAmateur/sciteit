@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -50,12 +50,12 @@ function admincheck(elem) {
 
 <div class="spacer">
   <%utils:round_field title="${_('to')}", 
-                      description="${_('(username, or # followed by the reddit name)')}">
+                      description="${_('(username, or # followed by the sciteit name)')}">
     <input type="text" name="to" value="${thing.to or ''}"
            onchange="admincheck(this)"/>
     ${error_field("NO_USER", "to")}
     ${error_field("USER_DOESNT_EXIST", "to")}
-    ${error_field("SUBREDDIT_NOEXIST", "to")}
+    ${error_field("SUBSCITEIT_NOEXIST", "to")}
     ${error_field("USER_BLOCKED", "to")}
   </%utils:round_field>
 </div>
@@ -78,7 +78,7 @@ function admincheck(elem) {
   style="display:none"
 %endif
 >
-   <img src="${static('alien-clippy.png')}" />
+   <img src="${static('sciteosaur-write.png')}" />
 
    <div class="clippy-bubble">
      <p class="clippy-headline">It looks like you're writing to an admin!</p>
@@ -88,48 +88,25 @@ function admincheck(elem) {
        &#32;
        <span class="admin-to">${thing.to}</span>
        &#32;
-       is the right admin for the job.
-
-       &#32;
-       <a href="http://reddit.com/help/faq#WhichstaffmembershouldIwritetoifIhaveaproblemorquestion">
-         The FAQ has some guidelines</a>
-       &#32;
-       about who handles what.
+       is the right person for the job.
 
        Also:
      </p>
      <ul>
-       <li>If you'd like to message all the admins at once, send your message to the
- 	&#32;<a href="/message/compose?to=${g.admin_message_acct|u}">admin message list.</a></li>
-
-       <li>If you think your posts are being caught in the spam filter,
-         please write to
-         &#32;
-         <a href="http://reddit.com/help/faq#HowcanItellwhomoderatesagivenreddit">
-          the moderator of the reddit
-         </a>
-         &#32;
-         instead.
-       </li>
-
        <li>If
          &#32;
          <span class="admin-to">${thing.to}</span>
-         &#32;<i>is</i>&#32; is a moderator of a specific subreddit you're
+         &#32;<i>is</i>&#32; a moderator of a specific subsciteit you're
          inquiring about, and that's actually the reason you're writing, please
          message 
          &#32;
-         <a href="http://reddit.com/help/faq#HowcanItellwhomoderatesagivenreddit">
-          all of the moderators of the reddit
+         <a href="http://reddit.com/help/faq#HowcanItellwhomoderatesagivensciteit">
+          all of the moderators of the sciteit
          </a>
          &#32; (using the "message the mods" feature located at the top of the
          mod box) with a direct link to the comment page of the submission or other
          reason you're writing about.
 
-       <li>If you're concerned that something is wrong with your entire account,
-	 please send your message to the admin list by 
-         &#32;<a href="/message/compose?to=${g.admin_message_acct|u}">messaging 
-	all of the admins of ${g.admin_message_acct}</a>&#32;(It'll be dealt with faster).</li>
      </ul>
   </div>
 

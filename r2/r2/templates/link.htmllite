@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ## 
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ## 
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -30,20 +30,20 @@
 <%def name="entry()">
 <% 
    from r2.lib.strings import Score
-   domain = get_domain(subreddit=False)
+   domain = get_domain(subsciteit=False)
    permalink = "http://%s%s" % (domain, thing.permalink)
    expanded = request.get.get("expanded")
    two_col = request.get.has_key("twocolumn") if l else False
  %>
   ${self.arrows(thing)}
-  <div class="reddit-entry entry ${thing.like_cls}" 
+  <div class="sciteit-entry entry ${thing.like_cls}" 
        %if expanded:
          ${optionalstyle("margin-left: 58px;")}
        %else:
          ${optionalstyle("margin-left: 28px; min-height:32px;")}
        %endif
        >
-    <a href="${thing.href_url}" class="reddit-link-title"
+    <a href="${thing.href_url}" class="sciteit-link-title"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
        %if thing.nofollow:
          rel="nofollow"
@@ -85,7 +85,7 @@
       </span>
       &#32;|&#32;
       %endif
-      <a class="reddit-comment-link"
+      <a class="sciteit-comment-link"
          ${optionalstyle("color:gray")}
          %if c.link_target:
            target="${c.link_target}"
@@ -93,7 +93,7 @@
          href="${permalink}">${thing.comment_label}</a>
     </small>
   </div>
-  <div class="reddit-link-end" ${optionalstyle("clear:left; padding:3px;")}>
+  <div class="sciteit-link-end" ${optionalstyle("clear:left; padding:3px;")}>
     <!--IE6sux-->
   </div>
 </%def>

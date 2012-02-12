@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController, base_listing, organic_pos
+from sciteit_base import SciteitController, base_listing, organic_pos
 from validator import *
 
 from r2.models import *
@@ -50,7 +50,7 @@ from pylons import Response
 
 import random
 
-class ListingController(RedditController):
+class ListingController(SciteitController):
     """Generalized controller for pages with lists of links."""
 
     # toggle skipping of links based on the users' save/hide/vote preferences
@@ -72,11 +72,11 @@ class ListingController(RedditController):
     # page title
     title_text = ''
 
-    # login box, subreddit box, submit box, etc, visible
+    # login box, subsciteit box, submit box, etc, visible
     show_sidebar = True
 
-    # class (probably a subclass of Reddit) to use to render the page.
-    render_cls = Reddit
+    # class (probably a subclass of Sciteit) to use to render the page.
+    render_cls = Sciteit
 
     #extra parameters to send to the render_cls constructor
     render_params = {}
@@ -297,19 +297,19 @@ class HotController(FixListing, ListingController):
 
         if isinstance(c.site, DefaultSR):
             if c.user_is_loggedin:
-                srlimit = Subreddit.DEFAULT_LIMIT
+                srlimit = Subsciteit.DEFAULT_LIMIT
                 over18 = c.user.has_subscribed and c.over18
             else:
-                srlimit = g.num_default_reddits
+                srlimit = g.num_default_sciteits
                 over18 = False
 
-            sr_ids = Subreddit.user_subreddits(c.user,
+            sr_ids = Subsciteit.user_subsciteits(c.user,
                                                limit=srlimit,
                                                over18=over18)
             return normalized_hot(sr_ids)
         #if not using the query_cache we still want cached front pages
         elif (not g.use_query_cache
-              and not isinstance(c.site, FakeSubreddit)
+              and not isinstance(c.site, FakeSubsciteit)
               and self.after is None
               and self.count == 0):
             return get_hot([c.site])
@@ -360,7 +360,7 @@ class NewController(ListingController):
             if item.promoted is not None:
                 return False
             elif c.user_is_loggedin and (c.user_is_admin or
-                                         item.subreddit.is_moderator(c.user)):
+                                         item.subsciteit.is_moderator(c.user)):
                 # let admins and moderators see them regardless
                 return wouldkeep
             elif wouldkeep and c.user_is_loggedin and c.user._id == item.author_id:
@@ -377,6 +377,7 @@ class NewController(ListingController):
         if self.sort == 'rising':
             return get_rising(c.site)
         else:
+	    print "Getting links for %s" % c.site
             return c.site.get_links('new', 'all')
 
     @validate(sort = VMenu('controller', NewMenu))
@@ -541,6 +542,11 @@ class UserController(ListingController):
             self.check_modified(self.vuser, 'commented')
             q = queries.get_comments(self.vuser, self.sort, self.time)
 
+#        elif self.where == 'criticisms':
+#            sup.set_sup_header(self.vuser, 'commented')
+#            self.check_modified(self.vuser, 'commented')
+#            q = queries.get_criticisms(self.vuser, self.sort, self.time)
+
         elif self.where == 'submitted':
             sup.set_sup_header(self.vuser, 'submitted')
             self.check_modified(self.vuser, 'submitted')
@@ -604,9 +610,13 @@ class UserController(ListingController):
 
     @validate(vuser = VExistingUname('username'))
     def GET_about(self, vuser):
+        print "API?"
+	print is_api()
+	print "Vuser"
+	print "|%s|" % vuser
         if not is_api() or not vuser:
             return self.abort404()
-        return Reddit(content = Wrapped(vuser)).render()
+        return Sciteit(content = Wrapped(vuser)).render()
 
 class MessageController(ListingController):
     show_sidebar = False
@@ -721,12 +731,12 @@ class MessageController(ListingController):
             q = queries.get_sent(c.user)
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_sr:
-                srids = Subreddit.reverse_moderator_ids(c.user)
-                srs = Subreddit._byID(srids, data = False, return_dict = False)
+                srids = Subsciteit.reverse_moderator_ids(c.user)
+                srs = Subsciteit._byID(srids, data = False, return_dict = False)
                 q = queries.merge_results(
-                    *[queries.get_unread_subreddit_messages(s) for s in srs])
+                    *[queries.get_unread_subsciteit_messages(s) for s in srs])
             else:
-                q = queries.get_unread_subreddit_messages(c.site)
+                q = queries.get_unread_subsciteit_messages(c.site)
         elif self.where == 'moderator':
             if c.have_mod_messages and self.mark != 'false':
                 c.user.modmsgtime = False
@@ -778,49 +788,49 @@ class MessageController(ListingController):
                                  success = success)
         return MessagePage(content = content).render()
 
-class RedditsController(ListingController):
-    render_cls = SubredditsPage
+class SciteitsController(ListingController):
+    render_cls = SubsciteitsPage
 
     def title(self):
-        return _('reddits')
+        return _('sciteits')
 
     def query(self):
         if self.where == 'banned' and c.user_is_admin:
-            reddits = Subreddit._query(Subreddit.c._spam == True,
+            sciteits = Subsciteit._query(Subsciteit.c._spam == True,
                                        sort = desc('_date'),
                                        write_cache = True,
                                        read_cache = True,
                                        cache_time = 5 * 60)
         else:
-            reddits = None
+            sciteits = None
             if self.where == 'new':
-                reddits = Subreddit._query( write_cache = True,
+                sciteits = Subsciteit._query( write_cache = True,
                                             read_cache = True,
                                             cache_time = 5 * 60)
-                reddits._sort = desc('_date')
+                sciteits._sort = desc('_date')
             else:
-                reddits = Subreddit._query( write_cache = True,
+                sciteits = Subsciteit._query( write_cache = True,
                                             read_cache = True,
                                             cache_time = 60 * 60)
-                reddits._sort = desc('_downs')
+                sciteits._sort = desc('_downs')
             # Consider resurrecting when it is not the World Cup
             #if c.content_langs != 'all':
-            #    reddits._filter(Subreddit.c.lang == c.content_langs)
+            #    sciteits._filter(Subsciteit.c.lang == c.content_langs)
 
-            if g.domain != 'reddit.com':
-                # don't try to render special subreddits (like promos)
-                reddits._filter(Subreddit.c.author_id != -1)
+            if g.domain != 'aosciteit.com':
+                # don't try to render special subsciteits (like promos)
+                sciteits._filter(Subsciteit.c.author_id != -1)
 
             if not c.over18:
-                reddits._filter(Subreddit.c.over_18 == False)
+                sciteits._filter(Subsciteit.c.over_18 == False)
 
-        return reddits
+        return sciteits
     def GET_listing(self, where, **env):
         self.where = where
         return ListingController.GET_listing(self, **env)
 
-class MyredditsController(ListingController):
-    render_cls = MySubredditsPage
+class MysciteitsController(ListingController):
+    render_cls = MySubsciteitsPage
 
     @property
     def menus(self):
@@ -828,26 +838,26 @@ class MyredditsController(ListingController):
                     NavButton(getattr(plurals, "approved submitter"), 'contributor'),
                     NavButton(plurals.moderator,   'moderator'))
 
-        return [NavMenu(buttons, base_path = '/reddits/mine/',
+        return [NavMenu(buttons, base_path = '/sciteits/mine/',
                         default = 'subscriber', type = "flatlist")]
 
     def title(self):
-        return _('reddits: ') + self.where
+        return _('sciteits: ') + self.where
 
     def query(self):
-        reddits = SRMember._query(SRMember.c._name == self.where,
+        sciteits = SRMember._query(SRMember.c._name == self.where,
                                   SRMember.c._thing2_id == c.user._id,
                                   #hack to prevent the query from
                                   #adding it's own date
                                   sort = (desc('_t1_ups'), desc('_t1_date')),
                                   eager_load = True,
                                   thing_data = True)
-        reddits.prewrap_fn = lambda x: x._thing1
-        return reddits
+        sciteits.prewrap_fn = lambda x: x._thing1
+        return sciteits
 
     def content(self):
         user = c.user if c.user_is_loggedin else None
-        num_subscriptions = len(Subreddit.reverse_subscriber_ids(user))
+        num_subscriptions = len(Subsciteit.reverse_subscriber_ids(user))
         if self.where == 'subscriber' and num_subscriptions == 0:
             message = strings.sr_messages['empty']
         else:

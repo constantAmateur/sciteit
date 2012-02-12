@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -22,7 +22,7 @@
 from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.log import log_text
-from r2.models import Report, Account, Subreddit
+from r2.models import Report, Account, Subsciteit
 
 from pylons import g
 
@@ -165,7 +165,7 @@ class AdminTools(object):
                 by_srid.setdefault(thing.sr_id, []).append(thing)
 
         if by_srid:
-            srs = Subreddit._byID(by_srid.keys(), data=True, return_dict=True)
+            srs = Subsciteit._byID(by_srid.keys(), data=True, return_dict=True)
             for sr_id, sr_things in by_srid.iteritems():
                 sr = srs[sr_id]
 
@@ -184,7 +184,7 @@ class AdminTools(object):
         account.gold_expiration = existing_expiration + timedelta(days)
 
         description = "Since " + now.strftime("%B %Y")
-        trophy = Award.give_if_needed("reddit_gold", account,
+        trophy = Award.give_if_needed("sciteit_gold", account,
                                      description=description,
                                      url="/help/gold")
         if trophy and trophy.description.endswith("Member Emeritus"):
@@ -194,8 +194,8 @@ class AdminTools(object):
 
         account.friend_rels_cache(_update=True)
 
-        if g.lounge_reddit:
-            sr = Subreddit._by_name(g.lounge_reddit)
+        if g.lounge_sciteit:
+            sr = Subsciteit._by_name(g.lounge_sciteit)
             sr.add_contributor(account)
 
     def degolden(self, account, severe=False):
@@ -204,12 +204,12 @@ class AdminTools(object):
             account.gold_charter = False
             Award.take_away("charter_subscriber", account)
 
-        Award.take_away("reddit_gold", account)
+        Award.take_away("sciteit_gold", account)
         account.gold = False
         account._commit()
 
-        if g.lounge_reddit and not getattr(account, "gold_charter", False):
-            sr = Subreddit._by_name(g.lounge_reddit)
+        if g.lounge_sciteit and not getattr(account, "gold_charter", False):
+            sr = Subsciteit._by_name(g.lounge_sciteit)
             sr.remove_contributor(account)
 
     def admin_list(self):
@@ -266,8 +266,8 @@ def update_gold_users(verbose=False):
             if verbose:
                 print "%s just expired" % account.name
             admintools.degolden(account)
-            send_system_message(account, "Your reddit gold subscription has expired. :(",
-               "Your subscription to reddit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/gold) Or, if you don't want to, please write to us at 912@reddit.com and tell us where we let you down, so we can work on fixing the problem.")
+            send_system_message(account, "Your sciteit gold subscription has expired. :(",
+               "Your subscription to sciteit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.sciteit.com/gold) Or, if you don't want to, please write to us at 912@sciteit.com and tell us where we let you down, so we can work on fixing the problem.")
             continue
 
         count += 1
@@ -292,8 +292,8 @@ def update_gold_users(verbose=False):
                 if verbose:
                     print "Sending notice to %s" % account.name
                 g.hardcache.set(hc_key, True, 86400 * 10)
-                send_system_message(account, "Your reddit gold subscription is about to expire!",
-                                    "Your subscription to reddit gold will be expiring soon. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/gold) Or, if you think we suck, just let your subscription lapse and go back to being a regular user.\n\nIf you have any questions, please write to 912@reddit.com.")
+                send_system_message(account, "Your sciteit gold subscription is about to expire!",
+                                    "Your subscription to sciteit gold will be expiring soon. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.sciteit.com/gold) Or, if you think we suck, just let your subscription lapse and go back to being a regular user.\n\nIf you have any questions, please write to 912@sciteit.com.")
 
     if verbose:
         for exp_date in sorted(expiration_dates.keys()):
@@ -398,9 +398,6 @@ def filter_quotas(unfiltered):
         return baskets, new_quotas
     else:
         return baskets, None
-
-def check_request(end_time):
-    pass
 
 try:
     from r2admin.models.admintools import *

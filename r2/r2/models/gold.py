@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -25,7 +25,7 @@ from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 from pylons import g, c
 from datetime import datetime
 import sqlalchemy as sa
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exceptions import IntegrityError
 
 from xml.dom.minidom import Document
 from r2.lib.utils import tup, randstr
@@ -42,7 +42,7 @@ ENGINE_NAME = 'authorize'
 ENGINE = g.dbm.get_engine(ENGINE_NAME)
 METADATA = make_metadata(ENGINE)
 
-gold_table = sa.Table('reddit_gold', METADATA,
+gold_table = sa.Table('sciteit_gold', METADATA,
                       sa.Column('trans_id', sa.String, nullable = False,
                                 primary_key = True),
                       # status can be: invalid, unclaimed, claimed
@@ -99,30 +99,30 @@ def create_unclaimed_gold (trans_id, payer_email, paying_id,
 # TODO: this should really live in emailer.py
 def notify_unclaimed_gold(txn_id, gold_secret, payer_email, source):
     from r2.lib import emailer
-    url = "http://www.reddit.com/thanks/" + gold_secret
+    url = "http://www.sciteit.com/thanks/" + gold_secret
 
     # No point in i18n, since we don't have access to the user's
     # language info (or name) at this point
     if gold_secret.startswith("cr_"):
         body = """
-Thanks for buying reddit gold gift creddits! We have received your %s
+Thanks for buying sciteit gold gift csciteits! We have received your %s
 transaction, number %s.
 
 Your secret claim code is %s. To associate the
-creddits with your reddit account, just visit
+csciteits with your sciteit account, just visit
 %s
 """ % (source, txn_id, gold_secret, url)
     else:
         body = """
-Thanks for subscribing to reddit gold! We have received your %s
+Thanks for subscribing to sciteit gold! We have received your %s
 transaction, number %s.
 
 Your secret subscription code is %s. You can use it to associate this
-subscription with your reddit account -- just visit
+subscription with your sciteit account -- just visit
 %s
 """ % (source, txn_id, gold_secret, url)
 
-    emailer.gold_email(body, payer_email, "reddit gold subscriptions")
+    emailer.gold_email(body, payer_email, "sciteit gold subscriptions")
 
 
 def create_claimed_gold (trans_id, payer_email, paying_id,
@@ -283,13 +283,13 @@ def process_google_transaction(trans_id):
     # get the financial details
     auth = trans.find("authorization-amount-notification")
     
-    # creddits?
-    is_creddits = False
+    # csciteits?
+    is_csciteits = False
     cart = trans.find("shopping-cart")
     if cart:
         for item in cart.findAll("item-name"):
-            if "creddit" in item.contents[0]:
-                is_creddits = True
+            if "csciteit" in item.contents[0]:
+                is_csciteits = True
                 break
 
     if not auth:
@@ -310,7 +310,7 @@ def process_google_transaction(trans_id):
         days = None
         try:
             pennies = int(float(auth.find("order-total").contents[0])*100)
-            if is_creddits:
+            if is_csciteits:
                 secret = "cr_"
                 if pennies >= 2999:
                     days = 12 * 31 * int(pennies / 2999)

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -37,7 +37,7 @@ def _feedback_email(email, body, kind, name='', reply_to = ''):
 def _system_email(email, body, kind, reply_to = "", thing = None):
     """
     For sending email from the system to a user (reply address will be
-    feedback and the name will be reddit.com)
+    feedback and the name will be sciteit.com)
     """
     Email.handler.add_to_queue(c.user if c.user_is_loggedin else None,
                                email, g.domain, g.feedback_email,
@@ -53,7 +53,7 @@ def _nerds_email(body, from_name, kind):
 
 def _gold_email(body, to_address, from_name, kind):
     """
-    For sending email to reddit gold subscribers
+    For sending email to sciteit gold subscribers
     """
     Email.handler.add_to_queue(None, to_address, from_name, g.goldthanks_email,
                                kind, body = body)
@@ -146,7 +146,9 @@ def send_queued_mail(test = False):
 
     clear = False
     if not test:
-        session = smtplib.SMTP(g.smtp_server)
+        session = smtplib.SMTP(g.smtp_server,g.smtp_port)
+	session.starttls()
+	session.login(g.smtp_user,g.smtp_pass)
     def sendmail(email):
         try:
             mimetext = email.to_MIMEText()
@@ -228,7 +230,7 @@ def _promo_email(thing, kind, body = "", **kw):
     body = Promo_Email(link = thing, kind = kind,
                        body = body, **kw).render(style = "email")
     return _system_email(a.email, body, kind, thing = thing,
-                         reply_to = "selfservicesupport@reddit.com")
+                         reply_to = "selfservicesupport@sciteit.com")
 
 
 def new_promo(thing):
@@ -262,6 +264,8 @@ def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
     msg["From"] = from_addr
     msg["To"] = to_addr
 
-    session = smtplib.SMTP(g.smtp_server)
+    session = smtplib.SMTP(g.smtp_server,g.smtp_port)
+    session.starttls()
+    session.login(g.smtp_user,g.smtp_pass)
     session.sendmail(from_addr, to_addr, msg.as_string())
     session.quit()

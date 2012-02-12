@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -25,6 +25,7 @@
 <%!
    from r2.lib.strings import strings
    from r2.lib.promote import STATUS
+   import re
  %>
 
 <%def name="banbuttons()">
@@ -63,6 +64,69 @@
   %endif
   %if thing.show_unmarknsfw:
     <li>${ynbutton(_("un-nsfw"), _("unmarked"), "unmarknsfw")}</li>
+  %endif
+</%def>
+
+<%def name="bestresponse_setter(name, value=None)">
+  <a href="javascript:void(0)"
+     onclick="return set_bestresponse(this, '${value or name}')">${_(name)}</a>
+</%def>
+
+##<%def name="bestresponse()">
+##  <li class="toggle">
+##    <form method="post" action="/post/bestresponse">
+##      <input type="hidden" value="${_('promoting...')}" name="executed"/>
+##      <a href="javascript:void(0)"
+##         onclick="return toggle_bestresponse_span(this)">${_("best response")}</a>
+##      <span class="option error">
+##         ${_("is this the best response?")}
+##
+##	 ##We should not even be here if this isn't true, but anyway...
+##         %if thing.is_critrootauthor:
+##         &#32;
+##         ${bestresponse_setter('yes')}
+##         &#32;/
+##         %endif
+##         
+##         &#32;
+##         ${bestresponse_setter('no')}
+##         &#32;
+##
+##     </span>
+##    </form>
+##  </li>
+##</%def>
+
+
+<%def name="nominate_setter(name, value=None)">
+  <a href="javascript:void(0)"
+     onclick="return set_nominate(this, '${value or name}')">${_(name)}</a>
+</%def>
+
+<%def name="nominate()">
+  %if thing.show_nominate:
+  <li class="toggle">
+    <form method="post" action="/post/nominate">
+      <input type="hidden" value="${_('nominating...')}" name="executed"/>
+      <a href="javascript:void(0)"
+         onclick="return toggle_nominate_span(this)">${_("nominate")}</a>
+      <span class="option error">
+         ${_("nominate this?")}
+
+         ## Note: show_nominate is logically equivalent to can_nominate at this time.
+         %if thing.show_nominate:
+         &#32;
+         ${nominate_setter('yes')}
+         &#32;/
+         %endif
+         
+         &#32;
+         ${nominate_setter('no')}
+         &#32;
+
+     </span>
+    </form>
+  </li>
   %endif
 </%def>
 
@@ -154,6 +218,14 @@
                           newwindow = thing.new_window)}
     </li>
   %endif
+  ##%if thing.show_criticisms:
+  ##  <li class="first">
+  ##  <%
+  ##      a=re.sub("/comments/","/criticisms/",thing.permalink)	
+  ##  %>
+  ##  ${self.criticism_button("criticism",thing.criticism_label,a,_sr_path = (thing.promoted is None),a_class=thing.criticismcls, newwindow=thing.new_window)}
+  ##  </li>
+  ##%endif
   %if thing.editable:
     <li>
       ${self.simple_button(_("edit"), "edit_usertext", css_class="edit-usertext")}
@@ -290,6 +362,10 @@
         </li>
       %endif
     %endif
+    ##${self.nominate()}
+    ##%if thing.is_critrootauthor:
+    ##	${self.bestresponse()}
+    ##%endif
     ${self.banbuttons()}
     ${self.distinguish()}
     %if not thing.profilepage and thing.can_reply:
@@ -456,6 +532,15 @@
                _class=a_class, title=title, 
                target='_blank' if newwindow else '_parent')}
 </%def>
+
+##<%def name="criticism_button(name, link_text, link,\
+##            _sr_path = True, a_class='', title='', newwindow = False)">
+##  ${plain_link(link_text, link, 
+##               _sr_path = _sr_path,
+##               _class=a_class, title=title, 
+##               target='_blank' if newwindow else '_parent')}
+##</%def>
+
 
 <%def name="bylink_button(title, link)">
  ${plain_link(title, link, _class="bylink", rel="nofollow")}

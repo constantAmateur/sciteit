@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -26,8 +26,7 @@ import signal
 from datetime import timedelta, datetime
 from urlparse import urlparse
 import json
-from sqlalchemy import engine
-from sqlalchemy import event
+from pycassa.pool import ConnectionPool as PycassaConnectionPool
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
@@ -37,7 +36,7 @@ from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
-from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
+from r2.lib.stats import Stats, CacheStats
 
 class Globals(object):
 
@@ -61,7 +60,10 @@ class Globals(object):
                  'num_comments',
                  'max_comments',
                  'max_comments_gold',
-                 'num_default_reddits',
+                 'num_criticisms',
+                 'max_criticisms',
+                 'max_criticisms_gold',
+                 'num_default_sciteits',
                  'num_query_queue_workers',
                  'max_sr_images',
                  'num_serendipity',
@@ -69,7 +71,6 @@ class Globals(object):
                  'comment_visits_period',
                   'min_membership_create_community',
                  'bcrypt_work_factor',
-                 'cassandra_pool_size',
                  ]
 
     float_props = ['min_promote_bid',
@@ -82,7 +83,6 @@ class Globals(object):
                   'log_start',
                   'sqlprinting',
                   'template_debug',
-                  'reload_templates',
                   'uncompressedJS',
                   'enable_doquery',
                   'use_query_cache',
@@ -102,21 +102,23 @@ class Globals(object):
                   'disable_ads',
                   'static_pre_gzipped',
                   'static_secure_pre_gzipped',
-                  'trust_local_proxies',
                   ]
 
     tuple_props = ['stalecaches',
                    'memcaches',
                    'permacache_memcaches',
                    'rendercaches',
+                   'servicecaches',
                    'cassandra_seeds',
                    'admins',
                    'sponsors',
-                   'automatic_reddits',
+                   'monitored_servers',
+                   'automatic_sciteits',
                    'agents',
                    'allowed_css_linked_domains',
                    'authorized_cnames',
                    'hardcache_categories',
+                   'proxy_addr',
                    's3_media_buckets',
                    'allowed_pay_countries',
                    'case_sensitive_domains']
@@ -179,10 +181,9 @@ class Globals(object):
         self.running_as_script = global_conf.get('running_as_script', False)
         
         # turn on for language support
-        if not hasattr(self, 'lang'):
-            self.lang = 'en'
+        if not hasattr(self, 'lang'): self.lang = 'en'
         self.languages, self.lang_name = \
-            get_active_langs(default_lang=self.lang)
+                        get_active_langs(default_lang= self.lang)
 
         all_languages = self.lang_name.keys()
         all_languages.sort()
@@ -217,50 +218,20 @@ class Globals(object):
         self.memcache = CMemcache(self.memcaches, num_clients = num_mc_clients)
         self.make_lock = make_lock_factory(self.memcache)
 
-        self.stats = Stats(global_conf.get('statsd_addr'),
-                           global_conf.get('statsd_sample_rate'))
-
-        event.listens_for(engine.Engine, 'before_cursor_execute')(
-            self.stats.pg_before_cursor_execute)
-        event.listens_for(engine.Engine, 'after_cursor_execute')(
-            self.stats.pg_after_cursor_execute)
-
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
-
-
-        keyspace = "reddit"
-        self.cassandra_pools = {
-            "main":
-                StatsCollectingConnectionPool(
-                    keyspace,
-                    stats=self.stats,
-                    logging_name="main",
-                    server_list=self.cassandra_seeds,
-                    pool_size=self.cassandra_pool_size,
-                    timeout=2,
-                    max_retries=3,
-                    prefill=False
-                ),
-            "noretries":
-                StatsCollectingConnectionPool(
-                    keyspace,
-                    stats=self.stats,
-                    logging_name="noretries",
-                    server_list=self.cassandra_seeds,
-                    pool_size=len(self.cassandra_seeds),
-                    timeout=2,
-                    max_retries=0,
-                    prefill=False
-                ),
-        }
-
+        self.cassandra = PycassaConnectionPool('sciteit',
+                                               server_list = self.cassandra_seeds,
+                                               pool_size = len(self.cassandra_seeds),
+                                               # TODO: .ini setting
+                                               timeout=15, max_retries=3,
+                                               prefill=False)
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)
         self.permacache = CassandraCacheChain(localcache_cls(),
                                               CassandraCache('permacache',
-                                                             self.cassandra_pools[self.cassandra_default_pool],
+                                                             self.cassandra,
                                                              read_consistency_level = self.cassandra_rcl,
                                                              write_consistency_level = self.cassandra_wcl),
                                               memcache = perma_memcache,
@@ -285,6 +256,11 @@ class Globals(object):
                                                     num_clients = num_mc_clients)))
         self.cache_chains.update(rendercache=self.rendercache)
 
+        self.servicecache = MemcacheChain((localcache_cls(),
+                                           CMemcache(self.servicecaches,
+                                                     num_clients = num_mc_clients)))
+        self.cache_chains.update(servicecache=self.servicecache)
+
         self.thing_cache = CacheChain((localcache_cls(),))
         self.cache_chains.update(thing_cache=self.thing_cache)
 
@@ -297,6 +273,9 @@ class Globals(object):
                                          HardCache(self)),
                                         cache_negative_results = True)
         self.cache_chains.update(hardcache=self.hardcache)
+
+        self.stats = Stats(global_conf.get('statsd_addr'),
+                           global_conf.get('statsd_sample_rate'))
 
         # I know this sucks, but we need non-request-threads to be
         # able to reset the caches, so we need them be able to close
@@ -317,7 +296,7 @@ class Globals(object):
         # set the modwindow
         self.MODWINDOW = timedelta(self.MODWINDOW)
 
-        self.REDDIT_MAIN = bool(os.environ.get('REDDIT_MAIN'))
+        self.SCITEIT_MAIN = bool(os.environ.get('SCITEIT_MAIN'))
 
         origin_prefix = self.domain_prefix + "." if self.domain_prefix else ""
         self.origin = "http://" + origin_prefix + self.domain
@@ -341,7 +320,7 @@ class Globals(object):
             self.static_names = {}
 
         #setup the logger
-        self.log = logging.getLogger('reddit')
+        self.log = logging.getLogger('sciteit')
         self.log.addHandler(logging.StreamHandler())
         if self.debug:
             self.log.setLevel(logging.DEBUG)
@@ -357,8 +336,8 @@ class Globals(object):
             print ("Warning: g.media_domain == g.domain. " +
                    "This may give untrusted content access to user cookies")
 
-        self.reddit_host = socket.gethostname()
-        self.reddit_pid  = os.getpid()
+        self.sciteit_host = socket.gethostname()
+        self.sciteit_pid  = os.getpid()
 
         for arg in sys.argv:
             tokens = arg.split("=")
@@ -366,6 +345,9 @@ class Globals(object):
                 k, v = tokens
                 self.log.debug("Overriding g.%s to %s" % (k, v))
                 setattr(self, k, v)
+
+        #the shutdown toggle
+        self.shutdown = False
 
         #if we're going to use the query_queue, we need amqp
         if self.write_query_queue and not self.amqp_host:
@@ -378,16 +360,25 @@ class Globals(object):
 
         # try to set the source control revision number
         try:
-            self.version = subprocess.check_output(["git", "rev-parse", "HEAD"])
-        except subprocess.CalledProcessError, e:
+            #Assume that all files are the same version
+            popen = subprocess.Popen(['svn','info'],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            #popen = subprocess.Popen(["git", "log", "--date=short",
+            #                          "--pretty=format:%H %h", '-n1'],
+            #                         stdin=subprocess.PIPE,
+            #                         stdout=subprocess.PIPE)
+            resp, stderrdata = popen.communicate()
+            #resp = resp.strip().split(' ')
+            resp = resp.strip().split('\n')
+            self.version = resp[-2]+' '+resp[-1]
+            self.short_version = resp[-4][10:]
+            #self.version, self.short_version = resp
+        except object, e:
             self.log.info("Couldn't read source revision (%r)" % e)
             self.version = self.short_version = '(unknown)'
-        else:
-            self.short_version = self.version[:7]
 
         if self.log_start:
-            self.log.error("reddit app %s:%s started %s at %s" %
-                           (self.reddit_host, self.reddit_pid,
+            self.log.error("sciteit app %s:%s started %s at %s" %
+                           (self.sciteit_host, self.sciteit_pid,
                             self.short_version, datetime.now()))
 
     @staticmethod
@@ -399,6 +390,8 @@ class Globals(object):
         return (x.strip() for x in v.split(delim) if x)
 
     def load_db_params(self, gc):
+        from r2.lib.services import get_db_load
+
         self.databases = tuple(self.to_iter(gc['databases']))
         self.db_params = {}
         if not self.databases:
@@ -422,7 +415,10 @@ class Globals(object):
             if params['max_overflow'] == "*":
                 params['max_overflow'] = self.db_pool_overflow_size
 
-            dbm.setup_db(db_name, g_override=self, **params)
+            ip = params['db_host']
+            ip_loads = get_db_load(self.servicecache, ip)
+            if ip not in ip_loads or ip_loads[ip][0] < 1000:
+                dbm.setup_db(db_name, g_override=self, **params)
             self.db_params[db_name] = params
 
         dbm.type_db = dbm.get_engine(gc['type_db'])

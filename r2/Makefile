@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 # 
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 # 
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,166 +20,135 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-SHELL=/bin/sh
-PYTHON=python
+# Javascript files to be compressified
+js_libs              = $(addprefix lib/,json2.js jquery.cookie.js jquery.url.js ui.core.js ui.datepicker.js jquery.flot.js jquery.lazyload.js)
+js_sources           = $(js_libs) jquery.sciteit.js sciteit.js login.js ui.js base.js sponsored.js compact.js blogbutton.js flair.js analytics.js utils.js
+js_targets           = button.js jquery.flot.js sponsored.js
+localized_js_targets = sciteit.js mobile.js
+localized_js_outputs = $(localized_js_targets:.js=.*.js)
+
+# CSS targets 
+main_css = sciteit.css
+main_sprite = $(static_dir)/sprite-main.png
+compact_css = compact.css
+compact_sprite = $(static_dir)/sprite-compact.png
+css_targets = $(main_css) $(compact_css) sciteit-ie6-hax.css sciteit-ie7-hax.css mobile.css
+
+package    = r2
+static_dir = $(package)/public/static
+
 SED=sed
 CAT=cat
-BUILD_DIR=build
+PYTHON=python
+JS_COMPRESS = paster run standalone $(package)/lib/js.py -c "build_sciteit_js()"
+CSS_COMPRESS = $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
+UPDATE_NAMES = $(PYTHON) $(package)/lib/static.py
 
-.PHONY: clean
-all: pyx static ini
-clean: clean_pyx clean_i18n clean_static
+# If admin codebase is install, get its path so that we can build ini
+# files against the primary production.ini
+PRIVATEREPOS = $(shell $(PYTHON) -c 'exec "try: import r2admin; print r2admin.__path__[0]\nexcept:pass"')
 
-#################### Cython
+# If sciteit-i18n repo is found, use that for r2.pot generation
+I18NPATH = $(shell $(PYTHON) -c 'exec "try: import sciteit_i18n; print sciteit_i18n.__path__[0]\nexcept ImportError: print \"r2/i18n\""')
+
+#------
+
+JSTARGETS   = $(foreach js,  $(js_targets) $(localized_js_targets),  $(static_dir)/$(js))
+JSOUTPUTS   = $(foreach js,  $(js_targets) $(localized_js_outputs),  $(static_dir)/$(js))
+JSSOURCES   = $(foreach js,  $(js_sources),  $(static_dir)/js/$(js))
+CSSTARGETS  = $(foreach css, $(css_targets), $(static_dir)/$(css))
+SPRITES     = $(main_sprite) $(compact_sprite)
+RTLCSS      = $(CSSTARGETS:.css=-rtl.css)
+NAMES = $(static_dir)/names.json
+
 PYX_FILES := $(shell find . -name \*.pyx)
-PYX_C_FILES := $(PYX_FILES:.pyx=.c)
-PYX_SO_FILES := $(PYX_FILES:.pyx=.so)
-PYX_BUILDSTAMP := $(BUILD_DIR)/pyx-buildstamp
+PYXC_FILES := $(PYX_FILES:.pyx=.c)
+PYXSO_FILES := $(PYX_FILES:.pyx=.so)
 
-.PHONY: clean_pyx
+NAMED = $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
+NAMELINKS = $(patsubst %.css,%.*.css,$(patsubst %.js,%.*.js,$(NAMED)))
+GZIPPED     = $(foreach file, $(filter %.js %.css, $(wildcard $(NAMELINKS))) $(static_dir)/js/lib/jquery.js, $(file).gz)
 
-pyx: $(PYX_BUILDSTAMP)
+INIUPDATE = $(wildcard *.update)
+INIS      = $(INIUPDATE:.update=.ini)
 
-$(PYX_C_FILES): %.c: %.pyx
-	cython $<
-
-# this won't rebuild pyx if you're a jerk and delete a .so file without deleting the buildstamp
-# make clean && make pyx will fix this
-$(PYX_BUILDSTAMP): $(PYX_C_FILES)
-	$(PYTHON) setup.py build_ext --inplace
-	touch $@
-
-clean_pyx:
-	rm -f $(PYX_BUILDSTAMP) $(PYX_C_FILES) $(PYX_SO_FILES)
-
-#################### i18n
-I18NPATH := $(shell $(PYTHON) -c 'from r2.lib.translation import I18N_PATH; print I18N_PATH')
-STRINGS_FILE := r2/lib/strings.py
-RAND_STRINGS_FILE := r2/lib/rand_strings.py
-POTFILE := $(I18NPATH)/r2.pot
-
-.PHONY: i18n clean_i18n
-
-i18n: $(RAND_STRINGS_FILE)
-	$(PYTHON) setup.py extract_messages -o $(POTFILE)
-
-$(RAND_STRINGS_FILE): $(STRINGS_FILE)
-	paster run standalone $(STRINGS_FILE) -c "print_rand_strings()" > $(RAND_STRINGS_FILE)
-
-clean_i18n:
-	rm -f $(RAND_STRINGS_FILE)
-
-#################### ini files
-UPDATE_FILES := $(wildcard *.update)
-INIFILES := $(UPDATE_FILES:.update=.ini)
-
-ini: $(INIFILES)
-
-$(INIFILES): %.ini: %.update
+%.ini:	%.update
+ifneq (,$(PRIVATEREPOS))
+	  ln -sf `pwd`/$< $(PRIVATEREPOS)/..
+	  make -C $(PRIVATEREPOS)/.. $@ 
+	  ln -sf $(PRIVATEREPOS)/../$@ . 
+else
 	  ./updateini.py example.ini $< > $@ || rm $@ 
+endif
 
-#################### Static Files
-STATIC_DIR := r2/public/static
 
-.PHONY: clean_static
+all:	pyx static names $(INIS)
 
-static: pyx css js names
+.PHONY: 	pyx js css rtl static names i18n clean clean_static clean_pyx all gzip clean_gzip
 
-clean_static: clean_css clean_js clean_names
+$(NAMES): $(JSTARGETS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
+	$(UPDATE_NAMES) $(NAMES) $(NAMED)
 
-#### Stylesheets
-CSS_COMPRESS := $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
-CSS_SOURCE_DIR := $(STATIC_DIR)/css
+$(JSTARGETS): $(JSSOURCES)
+	$(JS_COMPRESS)
 
-SPRITED_STYLESHEETS := reddit.css compact.css
-PROCESSED_SPRITED_STYLESHEETS := $(addprefix $(STATIC_DIR)/, $(SPRITED_STYLESHEETS))
-SPRITES := $(addprefix $(STATIC_DIR)/, $(patsubst %.css,sprite-%.png, $(SPRITED_STYLESHEETS)))
+$(main_sprite) $(static_dir)/$(main_css): $(static_dir)/css/$(main_css)
+	rm -f $@ # delete symlink so we don't just overwrite the old mangled file
+	$(PYTHON) r2/lib/nymph.py $< $(static_dir)/sprite-main.png | $(CSS_COMPRESS) > $@
 
-OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css
-MINIFIED_OTHER_STYLESHEETS := $(addprefix $(STATIC_DIR)/, $(OTHER_STYLESHEETS))
+$(compact_sprite) $(static_dir)/$(compact_css) : $(static_dir)/css/$(compact_css)
+	rm -f $@ # delete symlink so we don't just overwrite the old mangled file
+	$(PYTHON) r2/lib/nymph.py $< $(static_dir)/sprite-compact.png | $(CSS_COMPRESS) > $@
 
-PROCESSED_STYLESHEETS := $(PROCESSED_SPRITED_STYLESHEETS) $(MINIFIED_OTHER_STYLESHEETS)
-RTL_STYLESHEETS := $(PROCESSED_STYLESHEETS:.css=-rtl.css)
-
-CSS_OUTPUTS = $(PROCESSED_STYLESHEETS) $(RTL_STYLESHEETS) $(SPRITES)
-
-.PHONY: clean_css
-
-css: $(CSS_OUTPUTS)
-
-$(MINIFIED_OTHER_STYLESHEETS): $(STATIC_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
-	# when static file names are mangled, the original becomes a symlink to the mangled name
-	# remove the original file here in case it's a symlink so we don't just rewrite the old file
-	rm -f $@
+$(static_dir)/%.css : $(static_dir)/css/%.css
 	$(CAT) $< | $(CSS_COMPRESS) > $@
 
-$(STATIC_DIR)/sprite-%.png $(STATIC_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
-	# see above
-	rm -f $(STATIC_DIR)/sprite-$*.png $(STATIC_DIR)/$*.css
-	$(PYTHON) r2/lib/nymph.py $< $(STATIC_DIR)/sprite-$*.png | $(CSS_COMPRESS) > $(STATIC_DIR)/$*.css
-
-$(RTL_STYLESHEETS): %-rtl.css : %.css
-	# see above
-	rm -f $@
+$(RTLCSS):	%-rtl.css : %.css
 	$(SED) -e "s/left/>####</g" \
 	   -e "s/right/left/g" \
 	   -e "s/>####</right/g" \
 	   -e "s/\(margin\|padding\):\s*\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)/\1:\2 \5 \4 \3/g" $< > $@
 
-clean_css:
-	rm -f $(CSS_OUTPUTS)
+%.c: %.pyx
+	cython $<
 
-#### JS
-JS_MODULES := $(shell $(PYTHON) r2/lib/js.py enumerate_modules)
-JS_MODULE_BUILDSTAMPS := $(foreach module,$(JS_MODULES),$(BUILD_DIR)/$(module)-js-buildstamp)
-JS_OUTPUTS := $(shell $(PYTHON) r2/lib/js.py enumerate_outputs)
+$(PYXSO_FILES): $(PYXC_FILES)
+	python setup.py build_ext --inplace
 
-.PHONY: clean_js
+pyx: 		$(PYXSO_FILES)
 
-js: $(JS_MODULE_BUILDSTAMPS)
+static: 	js css rtl
 
-$(JS_OUTPUTS): $(JS_MODULE_BUILDSTAMPS)
+js: 		pyx $(JSTARGETS)
 
-define JS_MODULE_TEMPLATE
-$(BUILD_DIR)/$(1)-js-buildstamp: $$(shell $(PYTHON) r2/lib/js.py dependencies $(1))
-	paster run standalone r2/lib/js.py -c "build_module('$(1)')"
-	touch $$@
-endef
+css: 		$(CSSTARGETS) $(SPRITES)
 
-# apply the module template to each of the modules
-# so they source their deps from js.py and build accordingly
-$(foreach module,$(JS_MODULES),$(eval $(call JS_MODULE_TEMPLATE,$(module))))
+rtl:		$(RTLCSS)
 
-clean_js:
-	rm -f $(JS_MODULE_BUILDSTAMPS) $(STATIC_DIR)/*.js
+names:		$(NAMES)
 
-#### name mangling
-MANGLEABLE_FILES := $(CSS_OUTPUTS) $(JS_OUTPUTS)
-MANGLE_BUILDSTAMP := $(BUILD_DIR)/mangle-buildstamp
-NAMES_FILE := $(STATIC_DIR)/names.json
-MANGLED_FILES := $(wildcard $(foreach file,$(MANGLEABLE_FILES),$(basename $(file)).*$(suffix $(file))))
-
-.PHONY: clean_names
-
-names: $(MANGLE_BUILDSTAMP)
-
-$(MANGLE_BUILDSTAMP): $(MANGLEABLE_FILES)
-	$(PYTHON) r2/lib/static.py $(NAMES_FILE) $(MANGLEABLE_FILES)
-	touch $@
-
-clean_names:
-	rm -f $(MANGLE_BUILDSTAMP) $(NAMES_FILES) $(MANGLED_FILES)
-
-#### gzip!
-GZIPPABLE := $(filter %.css %.js,$(MANGLED_FILES) $(STATIC_DIR)/js/lib/jquery.js)
-GZIPPED := $(addsuffix .gzip,$(GZIPPABLE))
-
-.PHONY: clean_gzip
+# Not part of 'all' target as it doesn't need to be run for the site to work,
+# only when r2.pot needs updating
+i18n:
+	paster run run.ini r2/lib/strings.py -c "print_rand_strings()" > r2/lib/rand_strings.py
+	python setup.py extract_messages -o $(I18NPATH)/r2.pot
 
 gzip: $(GZIPPED)
 
-$(GZIPPED): %.gzip: %
+%.gz: %
 	gzip -c $< > $@
 
+clean: clean_static clean_pyx clean_gzip
+	rm -f $(INIS) r2/lib/rand_strings.py
+
+clean_pyx:
+	rm -f $(PYXSO_FILES) $(PYXC_FILES)
+
+clean_static: clean_names
+	rm -f $(JSTARGETS) $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
+
+clean_names:
+	rm -f $(NAMES) $(NAMELINKS) $(static_dir)/*.md5
+
 clean_gzip:
-	rm -f $(GZIPPED)
+	rm -f $(static_dir)/*.css.gz $(static_dir)/*.js.gz $(static_dir)/js/lib/*.gz

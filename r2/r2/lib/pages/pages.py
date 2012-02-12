@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -21,13 +21,11 @@
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
-from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit
+from r2.models import FakeSubsciteit, Subsciteit, Ad, AdSR
+from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiSciteit
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
-from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
+from r2.models import Flair, FlairTemplate, FlairTemplateBySubsciteitIndex
 from r2.models.oauth2 import OAuth2Client
-from r2.models import ModAction
-from r2.models import Thing
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
@@ -42,14 +40,14 @@ from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF, websafe_json
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
-from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
+from r2.lib.menus import SubsciteitButton, SubsciteitMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil
 from r2.lib.template_helpers import add_sr, get_domain
-from r2.lib.subreddit_search import popular_searches
+from r2.lib.subsciteit_search import popular_searches
 from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
@@ -93,8 +91,8 @@ def responsive(res, space_compress = False):
     c.response.content = res
     return c.response
 
-class Reddit(Templated):
-    '''Base class for rendering a page on reddit.  Handles toolbar creation,
+class Sciteit(Templated):
+    '''Base class for rendering a page on sciteit.  Handles toolbar creation,
     content of the footers, and content of the corner buttons.
 
     Constructor arguments:
@@ -110,14 +108,14 @@ class Reddit(Templated):
 
     settings determined at class-declaration time
 
-      create_reddit_box -- enable/disable display of the "Create a reddit" box
+      create_sciteit_box -- enable/disable display of the "Create a sciteit" box
       submit_box        -- enable/disable display of the "Submit" box
       searchbox         -- enable/disable the "search" box in the header
       extension_handling -- enable/disable rendering using non-html templates
                             (e.g. js, xml for rss, etc.)
     '''
 
-    create_reddit_box  = True
+    create_sciteit_box  = True
     submit_box         = True
     footer             = True
     searchbox          = True
@@ -140,7 +138,7 @@ class Reddit(Templated):
         self.show_sidebar   = show_sidebar
         self.space_compress = space_compress and not g.template_debug
         # instantiate a footer
-        self.footer         = RedditFooter() if footer else None
+        self.footer         = SciteitFooter() if footer else None
 
         #put the sort menus at the top
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
@@ -175,7 +173,7 @@ class Reddit(Templated):
 
         self.srtopbar = None
         if srbar and not c.cname and not is_api():
-            self.srtopbar = SubredditTopBar()
+            self.srtopbar = SubsciteitTopBar()
 
         if c.user_is_loggedin and self.show_sidebar and not is_api():
             self._content = PaneStack([ShareLink(), content])
@@ -185,27 +183,26 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
 
     def sr_admin_menu(self):
-        buttons = [NavButton(menu.community_settings, css_class = 'reddit-edit',
+        buttons = [NavButton(menu.community_settings, css_class = 'sciteit-edit',
                              dest = "edit"),
                    NamedButton('modmail', dest = "message/inbox",
                                css_class = 'moderator-mail'),
-                   NamedButton('moderators', css_class = 'reddit-moderators')]
+                   NamedButton('moderators', css_class = 'sciteit-moderators')]
 
         if c.site.type != 'public':
             buttons.append(NamedButton('contributors',
-                                       css_class = 'reddit-contributors'))
+                                       css_class = 'sciteit-contributors'))
         elif (c.user_is_loggedin and
               (c.site.is_moderator(c.user) or c.user_is_admin)):
             buttons.append(NavButton(menu.contributors, "contributors",
-                                     css_class = 'reddit-contributors'))
+                                     css_class = 'sciteit-contributors'))
 
         buttons.extend([
-                NamedButton('traffic', css_class = 'reddit-traffic'),
-                NamedButton('reports', css_class = 'reddit-reported'),
-                NamedButton('spam', css_class = 'reddit-spam'),
-                NamedButton('banned', css_class = 'reddit-ban'),
-                NamedButton('flair', css_class = 'reddit-flair'),
-                NamedButton('log', css_class = 'reddit-moderationlog'),
+                NamedButton('traffic', css_class = 'sciteit-traffic'),
+                NamedButton('reports', css_class = 'sciteit-reported'),
+                NamedButton('spam', css_class = 'sciteit-spam'),
+                NamedButton('banned', css_class = 'sciteit-ban'),
+                NamedButton('flair', css_class = 'sciteit-flair'),
                 ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         css_class = "icon-menu",  separator = '')]
@@ -231,47 +228,47 @@ class Reddit(Templated):
             ps.append(SponsorshipBox())
 
         no_ads_yet = True
-        if isinstance(c.site, MultiReddit) and c.user_is_loggedin:
-            srs = Subreddit._byID(c.site.sr_ids,data=True,
+        if isinstance(c.site, MultiSciteit) and c.user_is_loggedin:
+            srs = Subsciteit._byID(c.site.sr_ids,data=True,
                                   return_dict=False)
             if srs:
-                ps.append(SideContentBox(_('these reddits'),[SubscriptionBox(srs=srs)]))
+                ps.append(SideContentBox(_('these sciteits'),[SubscriptionBox(srs=srs)]))
 
-        # don't show the subreddit info bar on cnames unless the option is set
-        if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
-            ps.append(SubredditInfoBar())
+        # don't show the subsciteit info bar on cnames unless the option is set
+        if not isinstance(c.site, FakeSubsciteit) and (not c.cname or c.site.show_cname_sidebar):
+            ps.append(SubsciteitInfoBar())
             if (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads:
                 ps.append(Ads())
             no_ads_yet = False
 
-        user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
-        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode) and not user_banned:
-            kwargs = {
-                "title": _("Submit a link"),
-                "css_class": "submit",
-                "show_cover": True
-            }
-            if not c.user_is_loggedin or c.site.can_submit(c.user) or isinstance(c.site, FakeSubreddit):
-                kwargs["link"] = "/submit"
-                kwargs["sr_path"] = isinstance(c.site, DefaultSR) or not isinstance(c.site, FakeSubreddit),
-                kwargs["subtitles"] = [strings.submit_box_text]
-            else:
-                kwargs["disabled"] = True
-                if c.site.type == "archived":
-                    kwargs["subtitles"] = [strings.submit_box_archived_text]
-                else:
-                    kwargs["subtitles"] = [strings.submit_box_restricted_text]
-            ps.append(SideBox(**kwargs))
+        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode):
+            ps.append(SideBox(_('Submit a link'),
+                              '/submit', 'submit',
+                              sr_path = (isinstance(c.site,DefaultSR)
+                                         or not isinstance(c.site, FakeSubsciteit)),
+                              subtitles = [strings.submit_box_text],
+                              show_cover = True))
 
-        if self.create_reddit_box and c.user_is_loggedin:
+        if self.create_sciteit_box and c.user_is_loggedin:
             delta = datetime.datetime.now(g.tz) - c.user._date
-            if delta.days >= g.min_membership_create_community:
-                ps.append(SideBox(_('Create your own community'),
-                           '/reddits/create', 'create',
-                           subtitles = rand_strings.get("create_reddit", 2),
+            if c.user_is_admin or delta.days >= g.min_membership_create_community:
+                ps.append(SideBox(_('Create your own category'),
+                           '/sciteits/create', 'create',
+                           subtitles = ["...for your specialization",
+			   		"...for your journal club"],
+                           #subtitles = rand_strings.get("create_sciteit", 2),
                            show_cover = True, nocname=True))
 
-        if not isinstance(c.site, FakeSubreddit) and not c.cname:
+        if False and self.submit_box:
+            ps.append(SideBox(_('sciteit gold csciteits: now for sale!'),
+                              'http://www.sciteit.com/tb/efpn0',
+                              'gold',
+                              sr_path = False,
+                              subtitles = ["check it out: you can now give gold",
+                                           "subscriptions to deserving sciteitors"],
+                              show_cover = False, nocname = True))
+
+        if not isinstance(c.site, FakeSubsciteit) and not c.cname:
             moderators = self.sr_moderators()
             if moderators:
                 total = len(c.site.moderators)
@@ -332,17 +329,15 @@ class Reddit(Templated):
                                   css_class = "pref-lang")]
         else:
             lang = c.lang.split('-')[0] if c.lang else ''
-            lang_name = g.lang_name.get(lang) or [lang, '']
-            lang_name = "".join(lang_name)
-            buttons += [JsButton(lang_name,
-                                 onclick = "return showlang();",
-                                 css_class = "pref-lang")]
+            buttons += [JsButton(g.lang_name.get(lang, lang),  
+                                  onclick = "return showlang();",
+                                  css_class = "pref-lang")]
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
     def build_toolbars(self):
-        """Sets the layout of the navigation topbar on a Reddit.  The result
+        """Sets the layout of the navigation topbar on a Sciteit.  The result
         is a list of menus which will be rendered in order and
-        displayed at the top of the Reddit."""
+        displayed at the top of the Sciteit."""
         if c.site == Friends:
             main_buttons = [NamedButton('new', dest='', aliases=['/hot']),
                             NamedButton('comments')]
@@ -375,12 +370,12 @@ class Reddit(Templated):
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
 
         if not isinstance(c.site, DefaultSR) and not c.cname:
-            toolbar.insert(0, PageNameNav('subreddit'))
+            toolbar.insert(0, PageNameNav('subsciteit'))
 
         return toolbar
 
     def __repr__(self):
-        return "<Reddit>"
+        return "<Sciteit>"
 
     @staticmethod
     def content_stack(panes, css_class = None):
@@ -395,11 +390,11 @@ class AccountActivityBox(Templated):
     def __init__(self):
         super(AccountActivityBox, self).__init__()
 
-class RedditHeader(Templated):
+class SciteitHeader(Templated):
     def __init__(self):
         pass
 
-class RedditFooter(CachedTemplate):
+class SciteitFooter(CachedTemplate):
     def cachable_attrs(self):
         return [('path', request.path),
                 ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
@@ -407,46 +402,48 @@ class RedditFooter(CachedTemplate):
     def __init__(self):
         self.nav = [
             NavMenu([
-                    NamedButton("blog", False, nocname=True),
-                    NamedButton("ad_inq", False, nocname=True),
-                    NamedButton("code", False, nocname=True),
-                    NamedButton("feedback", False),
+	    	    #NamedButton("why sciteit?",False),
+                    #NamedButton("code", False, nocname=True),
+                    #NamedButton("feedback", False),
+		    NamedButton("aboutall",dest = '/help/about',nocname=True),
+		    NamedButton("code",dest = '/help/code',nocname=True),
+		    NamedButton("feedback",dest = 'feedback')
                 ],
                 title = _("about"),
                 type = "flat_vert",
                 separator = ""),
 
             NavMenu([
-                    NamedButton("help", False, nocname=True),
-                    OffsiteButton(_("FAQ"), dest = "/help/faq", nocname=True),
-                    OffsiteButton(_("reddiquette"), nocname=True, dest = "/help/reddiquette"),
-                    NamedButton("reddits", False, nocname=True),
+                    NamedButton("help", dest="/help/help", nocname=True),
+                    #OffsiteButton(_("FAQ"), dest = "/help/faq", nocname=True),
+		    NamedButton("FAQ",dest = "/help/faq", nocname=True),
+                    NamedButton("sciteits", False, nocname=True),
                 ],
                 title = _("help"),
                 type = "flat_vert",
                 separator = ""),
 
-            NavMenu([
-                    OffsiteButton("mobile", "http://i.reddit.com"),
-                    NamedButton("socialite", False),
-                    OffsiteButton(_("chrome extension"), "https://chrome.google.com/webstore/detail/algjnflpgoopkdijmkalfcifomdhmcbe"),
-                    NamedButton("buttons", True),
-                    NamedButton("widget", True),
-                ],
-                title = _("tools"),
-                type = "flat_vert",
-                separator = ""),
+#            NavMenu([
+#                    OffsiteButton("mobile", "http://i.sciteit.com"),
+#                    NamedButton("socialite", False),
+#                    OffsiteButton(_("chrome extension"), "https://chrome.google.com/webstore/detail/algjnflpgoopkdijmkalfcifomdhmcbe"),
+#                    NamedButton("buttons", True),
+#                    NamedButton("widget", True),
+#                ],
+#                title = _("tools"),
+#                type = "flat_vert",
+#                separator = "")#,
 
-            NavMenu([
-                    NamedButton("gold", False, nocname=True, dest = "/help/gold", css_class = "buygold"),
-                    NamedButton("store", False, nocname=True),
-                    OffsiteButton(_("redditgifts"), "http://redditgifts.com"),
-                    OffsiteButton(_("reddit.tv"), "http://reddit.tv"),
-                    OffsiteButton(_("radio reddit"), "http://radioreddit.com"),
-                ],
-                title = _("<3"),
-                type = "flat_vert",
-                separator = "")
+#            NavMenu([
+#                    NamedButton("gold", False, nocname=True, dest = "/help/gold", css_class = "buygold"),
+#                    NamedButton("store", False, nocname=True),
+#                    OffsiteButton(_("sciteitgifts"), "http://sciteitgifts.com"),
+#                    OffsiteButton(_("sciteit.tv"), "http://sciteit.tv"),
+#                    OffsiteButton(_("radio sciteit"), "http://radiosciteit.com"),
+#                ],
+#                title = _("<3"),
+#                type = "flat_vert",
+#                separator = "")
         ]
         CachedTemplate.__init__(self)
 
@@ -468,8 +465,8 @@ class ClickGadget(Templated):
         return content.render(style = "htmllite")
 
 
-class RedditMin(Reddit):
-    """a version of Reddit that has no sidebar, toolbar, footer,
+class SciteitMin(Sciteit):
+    """a version of Sciteit that has no sidebar, toolbar, footer,
        etc"""
     footer       = False
     show_sidebar = False
@@ -482,9 +479,9 @@ class LoginFormWide(CachedTemplate):
         self.auth_cname = c.authorized_cname
         CachedTemplate.__init__(self)
 
-class SubredditInfoBar(CachedTemplate):
+class SubsciteitInfoBar(CachedTemplate):
     """When not on Default, renders a sidebox which gives info about
-    the current reddit, including links to the moderator and
+    the current sciteit, including links to the moderator and
     contributor pages, as well as links to the banning page if the
     current user is a moderator."""
 
@@ -520,7 +517,6 @@ class SubredditInfoBar(CachedTemplate):
                     NamedButton('traffic'),
                     NavButton(menu.community_settings, 'edit'),
                     NavButton(menu.flair, 'flair'),
-                    NavButton(menu.modactions, 'modactions'),
                     ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         separator = '')]
@@ -538,24 +534,23 @@ class SideContentBox(Templated):
 
 class SideBox(CachedTemplate):
     """
-    Generic sidebox used to generate the 'submit' and 'create a reddit' boxes.
+    Generic sidebox used to generate the 'submit' and 'create a sciteit' boxes.
     """
-    def __init__(self, title, link=None, css_class='', subtitles = [],
-                 show_cover = False, nocname=False, sr_path = False, disabled=False):
+    def __init__(self, title, link, css_class='', subtitles = [],
+                 show_cover = False, nocname=False, sr_path = False):
         CachedTemplate.__init__(self, link = link, target = '_top',
                            title = title, css_class = css_class,
                            sr_path = sr_path, subtitles = subtitles,
-                           show_cover = show_cover, nocname=nocname,
-                           disabled=disabled)
+                           show_cover = show_cover, nocname=nocname)
 
 
-class PrefsPage(Reddit):
+class PrefsPage(Sciteit):
     """container for pages accessible via /prefs.  No extension handling."""
 
     extension_handling = False
 
     def __init__(self, show_sidebar = False, *a, **kw):
-        Reddit.__init__(self, show_sidebar = show_sidebar,
+        Sciteit.__init__(self, show_sidebar = show_sidebar,
                         title = "%s (%s)" %(_("preferences"),
                                             c.site.name.strip(' ')),
                         *a, **kw)
@@ -595,12 +590,12 @@ class PrefDelete(Templated):
     pass
 
 
-class MessagePage(Reddit):
+class MessagePage(Sciteit):
     """Defines the content for /message/*"""
     def __init__(self, *a, **kw):
         if not kw.has_key('show_sidebar'):
             kw['show_sidebar'] = False
-        Reddit.__init__(self, *a, **kw)
+        Sciteit.__init__(self, *a, **kw)
         if is_api():
             self.replybox = None
         else:
@@ -646,11 +641,11 @@ class MessageCompose(Templated):
                          admins = admintools.admin_list())
 
     
-class BoringPage(Reddit):
+class BoringPage(Sciteit):
     """parent class For rendering all sorts of uninteresting,
     sortless, navless form-centric pages.  The top navmenu is
     populated only with the text provided with pagename and the page
-    title is 'reddit.com: pagename'"""
+    title is 'sciteit.com: pagename'"""
     
     extension_handling= False
     
@@ -660,20 +655,25 @@ class BoringPage(Reddit):
         if "title" not in context:
             context['title'] = "%s: %s" % (name, pagename)
 
-        Reddit.__init__(self, **context)
+        Sciteit.__init__(self, **context)
 
     def build_toolbars(self):
-        if not isinstance(c.site, DefaultSR) and not c.cname:
-            return [PageNameNav('subreddit', title = self.pagename)]
-        else:
-            return [PageNameNav('nomenu', title = self.pagename)]
+        return [PageNameNav('nomenu', title = self.pagename)]
 
 class HelpPage(BoringPage):
+#    def __init__(self, pagename, **context):
+#    	self.pagename = pagename
+#	if "title" not in context:
+#	    context['title'] = "help: %s" % pagename
+#	
+#	Sciteit.__init__(self,**context)
+
     def build_toolbars(self):
         return [PageNameNav('help', title = self.pagename)]
 
+
 class FormPage(BoringPage):
-    create_reddit_box  = False
+    create_sciteit_box  = False
     submit_box         = False
     """intended for rendering forms with no rightbox needed or wanted"""
     def __init__(self, pagename, show_sidebar = False, *a, **kw):
@@ -780,7 +780,7 @@ class TakedownPane(Templated):
         Templated.__init__(self, *a, **kw)
 
 class CommentsPanel(Templated):
-    """the side-panel on the reddit toolbar frame that shows the top
+    """the side-panel on the sciteit toolbar frame that shows the top
        comments of a link"""
 
     def __init__(self, link = None, listing = None, expanded = False, *a, **kw):
@@ -790,6 +790,18 @@ class CommentsPanel(Templated):
 
         Templated.__init__(self, *a, **kw)
 
+#class CriticismsPanel(Templated):
+#    """the side-panel on the sciteit toolbar frame that shows the top
+#       comments of a link"""
+#
+#    def __init__(self, link = None, listing = None, expanded = False, *a, **kw):
+#        self.link = link
+#        self.listing = listing
+#        self.expanded = expanded
+#
+#        Templated.__init__(self, *a, **kw)
+
+
 class CommentVisitsBox(Templated):
     def __init__(self, visits, *a, **kw):
         self.visits = []
@@ -798,7 +810,7 @@ class CommentVisitsBox(Templated):
             self.visits.append(pretty)
         Templated.__init__(self, *a, **kw)
 
-class LinkInfoPage(Reddit):
+class LinkInfoPage(Sciteit):
     """Renders the varied /info pages for a link.  The Link object is
     passed via the link argument and the content passed to this class
     will be rendered after a one-element listing consisting of that
@@ -809,7 +821,7 @@ class LinkInfoPage(Reddit):
     Link.
     """
 
-    create_reddit_box = False
+    create_sciteit_box = False
 
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, duplicates = None,
@@ -859,8 +871,7 @@ class LinkInfoPage(Reddit):
         else:
             self.duplicates = duplicates
 
-        robots = "noindex,nofollow" if link._deleted else None
-        Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
+        Sciteit.__init__(self, title = title, short_description=short_description, *a, **kw)
 
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))
@@ -874,6 +885,7 @@ class LinkInfoPage(Reddit):
         buttons = []
         if not getattr(self.link, "disable_comments", False):
             buttons.extend([info_button('comments'),
+                            #info_button('criticisms'),
                             info_button('related')])
 
             if not self.link.is_self and self.duplicates:
@@ -892,12 +904,20 @@ class LinkInfoPage(Reddit):
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
         if not isinstance(c.site, DefaultSR) and not c.cname:
-            toolbar.insert(0, PageNameNav('subreddit'))
+            toolbar.insert(0, PageNameNav('subsciteit'))
 
         return toolbar
 
     def content(self):
+        #print self._content
+	#print self.nav_menu
+	#print self.infobar
+	#print self.link_listing
+	#print self.subtitle
         title_buttons = getattr(self, "subtitle_buttons", [])
+	#print "What have we ere?"
+	#print title_buttons
+	#print self.content_stack((self.infobar, self.link_listing, PaneStack([PaneStack((self.nav_menu,self._content))],title=self.subtitle,title_buttons = title_buttons,css_class="commentarea")))
         return self.content_stack((self.infobar, self.link_listing,
                                    PaneStack([PaneStack((self.nav_menu,
                                                          self._content))],
@@ -906,7 +926,7 @@ class LinkInfoPage(Reddit):
                                              css_class = "commentarea")))
 
     def rightbox(self):
-        rb = Reddit.rightbox(self)
+        rb = Sciteit.rightbox(self)
         if not (self.link.promoted and not c.user_is_sponsor):
             rb.insert(1, LinkInfoBar(a = self.link))
         return rb
@@ -934,7 +954,7 @@ class CommentPane(Templated):
         # disable: admin
 
         from r2.models import CommentBuilder, NestedListing
-        from r2.controllers.reddit_base import UnloggedUser
+        from r2.controllers.sciteit_base import UnloggedUser
 
         self.sort = sort
         self.num = num
@@ -942,11 +962,13 @@ class CommentPane(Templated):
 
         # don't cache on permalinks or contexts, and keep it to html
         try_cache = not comment and not context and (c.render_style == "html")
+	#Fuck ze cache
+	#try_cache=False
         self.can_reply = False
         if c.user_is_admin:
             try_cache = False
         if try_cache and c.user_is_loggedin:
-            sr = article.subreddit_slow
+            sr = article.subsciteit_slow
             c.can_reply = self.can_reply = sr.can_comment(c.user)
             # don't cache if the current user can ban comments in the listing
             try_cache = not sr.can_ban(c.user)
@@ -961,6 +983,12 @@ class CommentPane(Templated):
             return listing.listing()
 
         # generate the listing we would make for this user if caching is disabled.
+	#print "This is used to build..."
+	#print article
+	#print sort
+	#print comment
+	#print context
+	#print kw
         my_listing = renderer()
 
         # for now, disable the cache if the user happens to be an author of anything.
@@ -970,6 +998,7 @@ class CommentPane(Templated):
                     try_cache = False
                     break
 
+	#Caching will currently cause the comment/criticism pages to not be displayed properly, so turn it off for this
         if try_cache:
             # try to fetch the comment tree from the cache
             key = self.cache_key()
@@ -1012,6 +1041,7 @@ class CommentPane(Templated):
                                           is_friend = is_friend).render()
             g.log.debug("using comment page cache")
         else:
+	    #print "It's about to kick off..."
             self.rendered = my_listing.render()
 
     def listing_iter(self, l):
@@ -1034,8 +1064,8 @@ class LinkInfoBar(Templated):
             a = Wrapped(a)
         Templated.__init__(self, a = a, datefmt = datefmt)
 
-class EditReddit(Reddit):
-    """Container for the about page for a reddit"""
+class EditSciteit(Sciteit):
+    """Container for the about page for a sciteit"""
     extension_handling= False
 
     def __init__(self, *a, **kw):
@@ -1045,18 +1075,18 @@ class EditReddit(Reddit):
         title = _('community settings') if is_moderator else \
                 _('about %(site)s') % dict(site=c.site.name)
 
-        Reddit.__init__(self, title = title, *a, **kw)
+        Sciteit.__init__(self, title = title, *a, **kw)
     
     def build_toolbars(self):
         if not c.cname:
-            return [PageNameNav('subreddit')]
+            return [PageNameNav('subsciteit')]
         else:
             return []
 
-class SubredditsPage(Reddit):
-    """container for rendering a list of reddits.  The corner
+class SubsciteitsPage(Sciteit):
+    """container for rendering a list of sciteits.  The corner
     searchbox is hidden and its functionality subsumed by an in page
-    SearchBar for searching over reddits.  As a result this class
+    SearchBar for searching over sciteits.  As a result this class
     takes the same arguments as SearchBar, which it uses to construct
     self.searchbar"""
     searchbox    = False
@@ -1064,15 +1094,15 @@ class SubredditsPage(Reddit):
     def __init__(self, prev_search = '', num_results = 0, elapsed_time = 0,
                  title = '', loginbox = True, infotext = None,
                  search_params = {}, *a, **kw):
-        Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
+        Sciteit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
                         *a, **kw)
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
-                                   header = _('search reddits'),
+                                   header = _('search sciteits'),
                                    search_params = {},
                                    simple=True,
-                                   subreddit_search=True
+                                   subsciteit_search=True
                                    )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
 
@@ -1083,29 +1113,29 @@ class SubredditsPage(Reddit):
             buttons.append(NamedButton("banned"))
 
         if c.user_is_loggedin:
-            #add the aliases to "my reddits" stays highlighted
+            #add the aliases to "my sciteits" stays highlighted
             buttons.append(NamedButton("mine",
-                                       aliases=['/reddits/mine/subscriber',
-                                                '/reddits/mine/contributor',
-                                                '/reddits/mine/moderator']))
+                                       aliases=['/sciteits/mine/subscriber',
+                                                '/sciteits/mine/contributor',
+                                                '/sciteits/mine/moderator']))
 
-        return [PageNameNav('reddits'),
-                NavMenu(buttons, base_path = '/reddits', type="tabmenu")]
+        return [PageNameNav('sciteits'),
+                NavMenu(buttons, base_path = '/sciteits', type="tabmenu")]
 
     def content(self):
         return self.content_stack((self.searchbar, self.nav_menu,
                                    self.sr_infobar, self._content))
 
     def rightbox(self):
-        ps = Reddit.rightbox(self)
+        ps = Sciteit.rightbox(self)
         subscribe_box = SubscriptionBox()
-        num_reddits = len(subscribe_box.srs)
-        ps.append(SideContentBox(_("your front page reddits (%s)") %
-                                 num_reddits, [subscribe_box]))
+        num_sciteits = len(subscribe_box.srs)
+        ps.append(SideContentBox(_("your front page sciteits (%s)") %
+                                 num_sciteits, [subscribe_box]))
         return ps
 
-class MySubredditsPage(SubredditsPage):
-    """Same functionality as SubredditsPage, without the search box."""
+class MySubsciteitsPage(SubsciteitsPage):
+    """Same functionality as SubsciteitsPage, without the search box."""
     
     def content(self):
         return self.content_stack((self.nav_menu, self.infobar, self._content))
@@ -1122,24 +1152,25 @@ def votes_visible(user):
             c.user_is_admin)
 
 
-class ProfilePage(Reddit):
+class ProfilePage(Sciteit):
     """Container for a user's profile page.  As such, the Account
     object of the user must be passed in as the first argument, along
     with the current sub-page (to determine the title to be rendered
     on the page)"""
 
     searchbox         = False
-    create_reddit_box = False
+    create_sciteit_box = False
     submit_box        = False
 
     def __init__(self, user, *a, **kw):
         self.user     = user
-        Reddit.__init__(self, *a, **kw)
+        Sciteit.__init__(self, *a, **kw)
 
     def build_toolbars(self):
         path = "/user/%s/" % self.user.name
         main_buttons = [NavButton(menu.overview, '/', aliases = ['/overview']),
                    NamedButton('comments'),
+		   #NamedButton('criticisms'),
                    NamedButton('submitted')]
 
         if votes_visible(self.user):
@@ -1158,7 +1189,7 @@ class ProfilePage(Reddit):
 
 
     def rightbox(self):
-        rb = Reddit.rightbox(self)
+        rb = Sciteit.rightbox(self)
 
         tc = TrophyCase(self.user)
         helplink = ( "/help/awards", _("what's this?") )
@@ -1226,14 +1257,14 @@ class ProfileBar(Templated):
                     self.gold_subscr_id = user.gold_subscr_id
             if user._id != c.user._id:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
-                self.giftmsg = _("buy %(user)s a month of reddit gold" %
+                self.giftmsg = _("buy %(user)s a month of sciteit gold" %
                                  dict(user=user.name))
             elif running_out_of_gold:
                 self.goldlink = "/gold"
-                self.giftmsg = _("renew your reddit gold")
+                self.giftmsg = _("renew your sciteit gold")
             elif not c.user.gold:
                 self.goldlink = "/gold"
-                self.giftmsg = _("treat yourself to reddit gold")
+                self.giftmsg = _("treat yourself to sciteit gold")
 
             self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
@@ -1255,7 +1286,7 @@ class ClientInfoBar(InfoBar):
         InfoBar.__init__(self, *args, **kwargs)
         self.client = client
 
-class RedditError(BoringPage):
+class SciteitError(BoringPage):
     site_tracking = False
     def __init__(self, title, message = None):
         if not message:
@@ -1264,7 +1295,7 @@ class RedditError(BoringPage):
                             show_sidebar = False, 
                             content=ErrorPage(message))
 
-class Reddit404(BoringPage):
+class Sciteit404(BoringPage):
     site_tracking = False
     def __init__(self):
         ch=random.choice(['a','b','c','d','e'])
@@ -1294,13 +1325,13 @@ class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
     pass
 
-class SubredditTopBar(CachedTemplate):
+class SubsciteitTopBar(CachedTemplate):
 
     """The horizontal strip at the top of most pages for navigating
-    user-created reddits."""
+    user-created sciteits."""
     def __init__(self):
-        self._my_reddits = None
-        self._pop_reddits = None
+        self._my_sciteits = None
+        self._pop_sciteits = None
         name = '' if not c.user_is_loggedin else c.user.name
         langs = "" if name else c.content_langs
         # poor man's expiration, with random initial time
@@ -1311,129 +1342,226 @@ class SubredditTopBar(CachedTemplate):
                                over18 = c.over18)
 
     @property
-    def my_reddits(self):
-        if self._my_reddits is None:
-            self._my_reddits = Subreddit.user_subreddits(c.user, ids = False)
-        return self._my_reddits
+    def my_sciteits(self):
+        if self._my_sciteits is None:
+            self._my_sciteits = Subsciteit.user_subsciteits(c.user, ids = False)
+        return self._my_sciteits
 
     @property
-    def pop_reddits(self):
-        if self._pop_reddits is None:
-            p_srs = Subreddit.default_subreddits(ids = False,
-                                                 limit = Subreddit.sr_limit)
-            self._pop_reddits = [ sr for sr in p_srs
-                                  if sr.name not in g.automatic_reddits ]
-        return self._pop_reddits
+    def pop_sciteits(self):
+        if self._pop_sciteits is None:
+            p_srs = Subsciteit.default_subsciteits(ids = False,
+                                                 limit = Subsciteit.sr_limit)
+            self._pop_sciteits = [ sr for sr in p_srs
+                                  if sr.name not in g.automatic_sciteits ]
+        return self._pop_sciteits
 
+    @property
+    def pop_children(self):
+        target=c.site
+    	if isinstance(c.site,DefaultSR) or c.site.name.lower()==g.default_sr.lower():
+	   target=Subsciteit._by_name(g.default_sr) 
+        if getattr(target,'children',[]):
+	    try:
+	        ret=Subsciteit._byID(target.children)
+		return ret.values()
+	    except NotFound:
+	        return []
+	return []
 
-    def my_reddits_dropdown(self):
+    @property
+    def pop_sibs(self):
+    	"""This is exclusively siblings now.  Not ourself..."""
+    	if isinstance(c.site,DefaultSR) or c.site.name.lower()==g.default_sr.lower():
+	    return []
+        p_sibs=[]
+        if getattr(c.site,'parent',None):
+	    parent = Subsciteit._byID(c.site.parent)
+	    try:
+	        ret = Subsciteit._byID(parent.children)
+	        p_sibs.extend([sr for sr in ret.values() if sr!=c.site])
+            except NotFound:
+	        pass
+	#Remove dups... 
+	return list(set(p_sibs))
+
+    @property
+    def pop_parent(self):
+    	if isinstance(c.site,DefaultSR) or c.site.name.lower()==g.default_sr.lower():
+	    return None
+        if getattr(c.site,'parent',[]):
+	    try:
+	        return Subsciteit._byID(c.site.parent)
+	    except NotFound:
+		return None
+	return None
+
+    def my_sciteits_dropdown(self):
         drop_down_buttons = []
-        for sr in sorted(self.my_reddits, key = lambda sr: sr.name.lower()):
-            drop_down_buttons.append(SubredditButton(sr))
+        for sr in sorted(self.my_sciteits, key = lambda sr: sr.name.lower()):
+            drop_down_buttons.append(SubsciteitButton(sr))
         drop_down_buttons.append(NavButton(menu.edit_subscriptions,
                                            sr_path = False,
                                            css_class = 'bottom-option',
-                                           dest = '/reddits/'))
-        return SubredditMenu(drop_down_buttons,
-                             title = _('my reddits'),
+                                           dest = '/sciteits/'))
+        return SubsciteitMenu(drop_down_buttons,
+                             title = _('my sciteits'),
                              type = 'srdrop')
 
-    def subscribed_reddits(self):
-        srs = [SubredditButton(sr) for sr in
-                        sorted(self.my_reddits,
+    def subscribed_sciteits(self):
+        srs = [SubsciteitButton(sr) for sr in
+                        sorted(self.my_sciteits,
                                key = lambda sr: sr._downs,
                                reverse=True)
-                        if sr.name not in g.automatic_reddits
+                        if sr.name not in g.automatic_sciteits
                         ]
         return NavMenu(srs,
                        type='flatlist', separator = '-',
                        css_class = 'sr-bar')
 
-    def popular_reddits(self, exclude=[]):
+    def popular_sciteits(self, exclude=[]):
         exclusions = set(exclude)
-        buttons = [SubredditButton(sr)
-                   for sr in self.pop_reddits if sr not in exclusions]
+        buttons = [SubsciteitButton(sr)
+                   for sr in self.pop_sciteits if sr not in exclusions]
 
         return NavMenu(buttons,
                        type='flatlist', separator = '-',
                        css_class = 'sr-bar', _id = 'sr-bar')
 
-    def special_reddits(self):
-        reddits = [All, Random]
+    def current_children(self,exclude=[]):
+        exclusions = set(exclude)
+	srs = [sr for sr in self.pop_children if sr not in exclusions]
+	buttons=[]
+	if len(srs):
+	    buttons.append(SubsciteitButton(srs.pop(0)))
+	    buttons.extend([SubsciteitButton(sr) for sr in srs])
+
+        return NavMenu(buttons,
+                       type='flatlist', separator = '-',
+                       css_class = 'sr-bar topbar-kids', _id = 'sr-bar')
+
+    def current_sibs(self,exclude=[]):
+        exclusions = set(exclude)
+	srs = [sr for sr in self.pop_sibs if sr not in exclusions]
+	buttons=[SubsciteitButton(sr) for sr in srs]
+
+        return NavMenu(buttons,
+                       type='flatlist', separator = '-',
+                       css_class = 'sr-bar topbar-sibs', _id = 'sr-bar')
+
+    def current_sibs_dropdown(self):
+        drop_down_buttons = []
+        for sr in sorted(self.pop_sibs, key = lambda sr: sr.name.lower()):
+            drop_down_buttons.append(SubsciteitButton(sr))
+        return SubsciteitMenu(drop_down_buttons,
+                             title = _('siblings'),
+                             type = 'srdrop')
+
+    def current_kids_dropdown(self):
+        drop_down_buttons = []
+        for sr in sorted(self.pop_children, key = lambda sr: sr.name.lower()):
+            drop_down_buttons.append(SubsciteitButton(sr))
+        return SubsciteitMenu(drop_down_buttons,
+                             title = _('children'),
+                             type = 'srdrop')
+
+
+    def special_sciteits(self):
+        sciteits = [All, Random]
         if getattr(c.site, "over_18", False):
-            reddits.append(RandomNSFW)
+            sciteits.append(RandomNSFW)
         if c.user_is_loggedin:
             if c.user.friends:
-                reddits.append(Friends)
+                sciteits.append(Friends)
             if c.show_mod_mail:
-                reddits.append(Mod)
-        return NavMenu([SubredditButton(sr) for sr in reddits],
+                sciteits.append(Mod)
+	butts=[SubsciteitButton(sr) for sr in sciteits]
+	#if getattr(c.site, "parent",False) and isinstance(c.site.parent,Subsciteit):
+	#    butts.append(SubsciteitButton(c.site.parent,special="UP"))
+
+        return NavMenu(butts,
                        type = 'flatlist', separator = '-',
                        css_class = 'sr-bar')
     
     def sr_bar (self):
-        sep = '<span class="separator">&nbsp;|&nbsp;</span>'
-        menus = []
-        menus.append(self.special_reddits())
+	sep = '<span class="separator">&nbsp;|&nbsp;</span>'
+	menus = []
+        menus.append(self.special_sciteits())
+	if getattr(c.site,"parent",None):
+	    menus.append(RawString(sep))
+	    menus.append(NavMenu([SubsciteitButton(self.pop_parent)],type='flatlist',seperator = '-',css_class = 'sr-bar topbar-parent'))
         menus.append(RawString(sep))
+	#The current site...
+        menus.append(NavMenu([SubsciteitButton(c.site)],
+                       type='flatlist', separator = '-',
+                       css_class = 'sr-bar topbar-sibs', _id = 'sr-bar'))
+	if len(self.pop_sibs) and len(self.pop_sibs) < int(g.sib_dropdown_threshold):
+	    menus.append(RawString('<span class="separator">-</span>'))
+	    menus.append(self.current_sibs())
+	elif len(self.pop_sibs):
+	    #Too long, use tree
+	    menus.append(RawString('<span class="separator">-</span>'))
+	    menus = menus + [self.current_sibs_dropdown()]
+	if len(self.pop_children) and len(self.pop_children)<int(g.child_dropdown_threshold):
+	    menus.append(RawString(sep))
+	    menus.append(self.current_children())
+	elif len(self.pop_children):
+	    menus.append(RawString(sep))
+	    menus = menus + [self.current_kids_dropdown()]
+        if c.user_is_loggedin:
+            #if len(self.my_sciteits) > 0:
+            menus = [self.my_sciteits_dropdown()] + [RawString('&nbsp;'*3)]+menus
 
+            #menus.append(self.subscribed_sciteits())
+            #sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
+            #menus.append(RawString(sep))
 
-        if not c.user_is_loggedin:
-            menus.append(self.popular_reddits())
-        else:
-            if len(self.my_reddits) > g.sr_dropdown_threshold:
-                menus = [self.my_reddits_dropdown()] + menus
-
-            menus.append(self.subscribed_reddits())
-            sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
-            menus.append(RawString(sep))
-
-            menus.append(self.popular_reddits(exclude=self.my_reddits))
+            #menus.append(self.popular_sciteits(exclude=self.my_sciteits))
 
         return menus
 
 class SubscriptionBox(Templated):
-    """The list of reddits a user is currently subscribed to to go in
+    """The list of sciteits a user is currently subscribed to to go in
     the right pane."""
     def __init__(self, srs=None):
         if srs is None:
-            srs = Subreddit.user_subreddits(c.user, ids = False, limit=None)
+            srs = Subsciteit.user_subsciteits(c.user, ids = False, limit=None)
         srs.sort(key = lambda sr: sr.name.lower())
         self.srs = srs
         self.goldlink = None
         self.goldmsg = None
         self.prelink = None
         
-        if len(srs) > Subreddit.sr_limit and c.user_is_loggedin:
+        if len(srs) > Subsciteit.sr_limit and c.user_is_loggedin:
             if not c.user.gold:
                 self.goldlink = "/gold"
-                self.goldmsg = _("raise it to %s") % Subreddit.gold_limit
-                self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
-                                _("%s visible") % Subreddit.sr_limit]
+                self.goldmsg = _("raise it to %s") % Subsciteit.gold_limit
+                self.prelink = ["/help/faq#HowmanysciteitscanIsubscribeto",
+                                _("%s visible") % Subsciteit.sr_limit]
             else:
                 self.goldlink = "/help/gold#WhatdoIgetforjoining"
-                extra = min(len(srs) - Subreddit.sr_limit,
-                            Subreddit.gold_limit - Subreddit.sr_limit)
-                visible = min(len(srs), Subreddit.gold_limit)
+                extra = min(len(srs) - Subsciteit.sr_limit,
+                            Subsciteit.gold_limit - Subsciteit.sr_limit)
+                visible = min(len(srs), Subsciteit.gold_limit)
                 bonus = {"bonus": extra}
-                self.goldmsg = _("%(bonus)s bonus reddits") % bonus
-                self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
+                self.goldmsg = _("%(bonus)s bonus sciteits") % bonus
+                self.prelink = ["/help/faq#HowmanysciteitscanIsubscribeto",
                                 _("%s visible") % visible]
         
         Templated.__init__(self, srs=srs, goldlink=self.goldlink,
                            goldmsg=self.goldmsg)
 
     @property
-    def reddits(self):
+    def sciteits(self):
         return wrap_links(self.srs)
 
-class CreateSubreddit(Templated):
-    """reddit creation form."""
+class CreateSubsciteit(Templated):
+    """sciteit creation form."""
     def __init__(self, site = None, name = ''):
         Templated.__init__(self, site = site, name = name)
 
-class SubredditStylesheet(Templated):
-    """form for editing or creating subreddit stylesheets"""
+class SubsciteitStylesheet(Templated):
+    """form for editing or creating subsciteit stylesheets"""
     def __init__(self, site = None,
                  stylesheet_contents = ''):
         Templated.__init__(self, site = site,
@@ -1453,10 +1581,10 @@ class UploadedImage(Templated):
                            form_id = form_id)
 
 class Thanks(Templated):
-    """The page to claim reddit gold trophies"""
+    """The page to claim sciteit gold trophies"""
     def __init__(self, secret=None):
         if secret and secret.startswith("cr_"):
-            status = "creddits"
+            status = "csciteits"
         elif g.cache.get("recent-gold-" + c.user.name):
             status = "recent"
         elif c.user.gold:
@@ -1464,8 +1592,8 @@ class Thanks(Templated):
         else:
             status = "mundane"
 
-        if g.lounge_reddit:
-            lounge_url = "/r/" + g.lounge_reddit
+        if g.lounge_sciteit:
+            lounge_url = "/r/" + g.lounge_sciteit
             lounge_html = safemarkdown(strings.lounge_msg % dict(link=lounge_url))
         else:
             lounge_html = None
@@ -1477,14 +1605,14 @@ class Gold(Templated):
                  recipient, recipient_name):
 
         if c.user_is_admin:
-            user_creddits = 50
+            user_csciteits = 50
         else:
-            user_creddits = c.user.gold_creddits
+            user_csciteits = c.user.gold_csciteits
 
         Templated.__init__(self, goldtype = goldtype, period = period,
                            months = months, signed = signed,
                            recipient_name = recipient_name,
-                           user_creddits = user_creddits,
+                           user_csciteits = user_csciteits,
                            bad_recipient =
                            bool(recipient_name and not recipient))
 
@@ -1492,7 +1620,7 @@ class Gold(Templated):
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,
                  recipient, giftmessage, passthrough):
-        pay_from_creddits = False
+        pay_from_csciteits = False
 
         if period == "monthly" or 1 <= months < 12:
             price = 3.99
@@ -1500,9 +1628,9 @@ class GoldPayment(Templated):
             price = 29.99
 
         if c.user_is_admin:
-            user_creddits = 50
+            user_csciteits = 50
         else:
-            user_creddits = c.user.gold_creddits
+            user_csciteits = c.user.gold_csciteits
 
         if goldtype == "autorenew":
             summary = strings.gold_summary_autorenew % dict(user=c.user.name)
@@ -1528,14 +1656,14 @@ class GoldPayment(Templated):
             google_id = g.GOOGLE_ID
         else:
             if months < 12:
-                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
+                paypal_buttonid = g.PAYPAL_BUTTONID_CSCITEITS_BYMONTH
                 quantity = months
             else:
-                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
+                paypal_buttonid = g.PAYPAL_BUTTONID_CSCITEITS_BYYEAR
                 quantity = months / 12
 
-            if goldtype == "creddits":
-                summary = strings.gold_summary_creddits % dict(
+            if goldtype == "csciteits":
+                summary = strings.gold_summary_csciteits % dict(
                           amount=Score.somethings(months, "month"))
             elif goldtype == "gift":
                 if signed:
@@ -1543,10 +1671,10 @@ class GoldPayment(Templated):
                 else:
                     format = strings.gold_summary_anonymous_gift
 
-                if months <= user_creddits:
-                    pay_from_creddits = True
+                if months <= user_csciteits:
+                    pay_from_csciteits = True
                 elif months >= 12:
-                    # If you're not paying with creddits, you have to either
+                    # If you're not paying with csciteits, you have to either
                     # buy by month or spend a multiple of 12 months
                     months = quantity * 12
 
@@ -1561,19 +1689,19 @@ class GoldPayment(Templated):
         Templated.__init__(self, goldtype=goldtype, period=period,
                            months=months, quantity=quantity, price=price,
                            summary=summary, giftmessage=giftmessage,
-                           pay_from_creddits=pay_from_creddits,
+                           pay_from_csciteits=pay_from_csciteits,
                            passthrough=passthrough,
                            google_id=google_id,
                            paypal_buttonid=paypal_buttonid)
 
 class GiftGold(Templated):
-    """The page to gift reddit gold trophies"""
+    """The page to gift sciteit gold trophies"""
     def __init__(self, recipient):
         if c.user_is_admin:
-            gold_creddits = 500
+            gold_csciteits = 500
         else:
-            gold_creddits = c.user.gold_creddits
-        Templated.__init__(self, recipient=recipient, gold_creddits=gold_creddits)
+            gold_csciteits = c.user.gold_csciteits
+        Templated.__init__(self, recipient=recipient, gold_csciteits=gold_csciteits)
 
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
@@ -1644,21 +1772,21 @@ class SearchForm(Templated):
     is the previous search."""
     def __init__(self, prev_search = '', search_params = {},
                  site=None, simple=True, restrict_sr=False, 
-                 subreddit_search=False):
+                 subsciteit_search=False):
         Templated.__init__(self, prev_search = prev_search,
                            search_params = search_params, site=site,
                            simple=simple, restrict_sr=restrict_sr, 
-                           subreddit_search=subreddit_search)
+                           subsciteit_search=subsciteit_search)
 
 
 class SearchBar(Templated):
-    """More detailed search box for /search and /reddits pages.
+    """More detailed search box for /search and /sciteits pages.
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
                  search_params = {}, show_feedback=False,
                  simple=False, restrict_sr=False, site=None, 
-                 subreddit_search=False,
+                 subsciteit_search=False,
                  **kw):
 
         # not listed explicitly in args to ensure it translates properly
@@ -1676,7 +1804,7 @@ class SearchBar(Templated):
 
         Templated.__init__(self, search_params = search_params,
                            simple=simple, restrict_sr=restrict_sr,
-                           site=site, subreddit_search=subreddit_search)
+                           site=site, subsciteit_search=subsciteit_search)
 
 class SearchFail(Templated):
     """Search failure page."""
@@ -1701,7 +1829,7 @@ class Frame(Wrapped):
                            fullname = fullname, thumbnail = thumbnail)
 
 class FrameToolbar(Wrapped):
-    """The reddit voting toolbar used together with Frame."""
+    """The sciteit voting toolbar used together with Frame."""
 
     cachable = True
     extension_handling = False
@@ -1758,8 +1886,8 @@ class FrameToolbar(Wrapped):
 
 class NewLink(Templated):
     """Render the link submission form"""
-    def __init__(self, captcha = None, url = '', title= '', subreddits = (),
-                 then = 'comments', resubmit=False):
+    def __init__(self, captcha = None, url = '', title= '', subsciteits = (),
+                 then = 'comments'):
 
         self.show_link = self.show_self = False
 
@@ -1790,14 +1918,15 @@ class NewLink(Templated):
 
         self.sr_searches = simplejson.dumps(popular_searches())
 
-        self.resubmit = resubmit
+        self.on_default_sr = c.default_sr
+
         if c.default_sr:
             self.default_sr = None
         else:
-            self.default_sr = c.site
+            self.default_sr = c.site.name
 
         Templated.__init__(self, captcha = captcha, url = url,
-                         title = title, subreddits = subreddits,
+                         title = title, subsciteits = subsciteits,
                          then = then)
 
 class ShareLink(CachedTemplate):
@@ -1828,13 +1957,13 @@ class ButtonEmbed(CachedTemplate):
     def __init__(self, button = None, width = 100,
                  height=100, referer = "", url = "", **kw):
         arg = "cnameframe=1&" if c.cname else ""
-        sr = c.site.name if not isinstance(c.site, FakeSubreddit) else ""
+        sr = c.site.name if not isinstance(c.site, FakeSubsciteit) else ""
         if sr:
             arg += "sr=%s&" % sr
         Templated.__init__(self, button = button,
                            width = width, height = height,
                            referer=referer, url = url,
-                           domain = get_domain(subreddit = False),
+                           domain = get_domain(subsciteit = False),
                            arg = arg,
                            **kw)
 
@@ -1886,6 +2015,39 @@ class SelfServeBlurb(Templated):
 class FeedbackBlurb(Templated):
     pass
 
+class HelpBlurb(Templated):
+    def __init__(self,what="faq"):
+	Templated.__init__(self,what=what)
+
+class FaqBlurb(Templated):
+    pass
+
+class AboutBlurb(Templated):
+    pass
+
+class CodeBlurb(Templated):
+    pass
+
+class Help(Templated):
+    """The help form(s)"""
+    def __init__(self, title, action):
+        email = name = ''
+        if c.user_is_loggedin:
+            email = getattr(c.user, "email", "")
+            name = c.user.name
+
+        captcha = None
+        if not c.user_is_loggedin or c.user.needs_captcha():
+            captcha = Captcha()
+
+        Templated.__init__(self,
+                         captcha = captcha,
+                         title = title,
+                         action = action,
+                         email = email,
+                         name = name)
+
+
 class Feedback(Templated):
     """The feedback and ad inquery form(s)"""
     def __init__(self, title, action):
@@ -1918,9 +2080,27 @@ class Bookmarklets(Templated):
             # only include the toolbar link if we're not on an
             # unathorised cname. See toolbar.py:GET_s for discussion
             if not (c.cname and c.site.domain not in g.authorized_cnames):
-                buttons.insert(0, "reddit toolbar")
+                buttons.insert(0, "sciteit toolbar")
         Templated.__init__(self, buttons = buttons)
 
+
+class Translator_Message(Templated):
+    def __init__(self, locale, user):
+        from r2.lib.translation import Translator
+        self.user = user
+        self.locale = locale
+        self.lang_name = Translator.get_name(self.locale)
+        self.en_name = Translator.get_en_name(self.locale)
+        Templated.__init__(self)
+
+class AdminTranslations(Templated):
+    """The translator control interface, used for determining which
+    user is allowed to edit which translation file and for providing a
+    summary of what translation files are done and/or in use."""
+    def __init__(self):
+        from r2.lib.translation import list_translations
+        Templated.__init__(self)
+        self.translations = list_translations()
 
 class UserAwards(Templated):
     """For drawing the regular-user awards page."""
@@ -2264,32 +2444,32 @@ class Ads(Templated):
     pass
 
 class Embed(Templated):
-    """wrapper for embedding /help into reddit as if it were not on a separate wiki."""
+    """wrapper for embedding /help into sciteit as if it were not on a separate wiki."""
     def __init__(self,content = ''):
         Templated.__init__(self, content = content)
 
 
-def wrapped_flair(user, subreddit, force_show_flair):
-    if (not hasattr(subreddit, '_id')
-        or not (force_show_flair or getattr(subreddit, 'flair_enabled', True))):
+def wrapped_flair(user, subsciteit, force_show_flair):
+    if (not hasattr(subsciteit, '_id')
+        or not (force_show_flair or getattr(subsciteit, 'flair_enabled', True))):
         return False, 'right', '', ''
 
     get_flair_attr = lambda a, default=None: getattr(
-        user, 'flair_%s_%s' % (subreddit._id, a), default)
+        user, 'flair_%s_%s' % (subsciteit._id, a), default)
 
     return (get_flair_attr('enabled', default=True),
-            getattr(subreddit, 'flair_position', 'right'),
+            getattr(subsciteit, 'flair_position', 'right'),
             get_flair_attr('text'), get_flair_attr('css_class'))
 
 class WrappedUser(CachedTemplate):
     FLAIR_CSS_PREFIX = 'flair-'
 
     def __init__(self, user, attribs = [], context_thing = None, gray = False,
-                 subreddit = None, force_show_flair = None,
+                 subsciteit = None, force_show_flair = None,
                  flair_template = None, flair_text_editable = False,
                  include_flair_selector = False):
-        if not subreddit:
-            subreddit = c.site
+        if not subsciteit:
+            subsciteit = c.site
 
         attribs.sort()
         author_cls = 'author'
@@ -2303,7 +2483,7 @@ class WrappedUser(CachedTemplate):
             if tup[1] == 'F' and '(' in tup[3]:
                 author_title = tup[3]
 
-        flair = wrapped_flair(user, subreddit or c.site, force_show_flair)
+        flair = wrapped_flair(user, subsciteit or c.site, force_show_flair)
         flair_enabled, flair_position, flair_text, flair_css_class = flair
         has_flair = bool(
             c.user.pref_show_flair and (flair_text or flair_css_class))
@@ -2435,7 +2615,7 @@ class UserList(Templated):
 class FlairPane(Templated):
     def __init__(self, num, after, reverse, name, user):
         # Make sure c.site isn't stale before rendering.
-        c.site = Subreddit._byID(c.site._id)
+        c.site = Subsciteit._byID(c.site._id)
 
         tabs = [
             ('grant', _('grant flair'), FlairList(num, after, reverse, name,
@@ -2451,7 +2631,7 @@ class FlairPane(Templated):
             flair_self_assign_enabled=c.site.flair_self_assign_enabled)
 
 class FlairList(Templated):
-    """List of users who are tagged with flair within a subreddit."""
+    """List of users who are tagged with flair within a subsciteit."""
 
     def __init__(self, num, after, reverse, name, user):
         Templated.__init__(self, num=num, after=after, reverse=reverse,
@@ -2535,7 +2715,7 @@ class FlairCsv(Templated):
 class FlairTemplateList(Templated):
     @property
     def templates(self):
-        ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
+        ids = FlairTemplateBySubsciteitIndex.get_template_ids(c.site._id)
         fts = FlairTemplate._byID(ids)
         return [FlairTemplateEditor(fts[i]) for i in ids]
 
@@ -2558,19 +2738,19 @@ class FlairTemplateEditor(Templated):
 class FlairTemplateSample(Templated):
     """Like a read-only version of FlairTemplateEditor."""
     def __init__(self, flair_template):
-        wrapped_user = WrappedUser(c.user, subreddit=c.site, force_show_flair=True,
+        wrapped_user = WrappedUser(c.user, subsciteit=c.site, force_show_flair=True,
                                    flair_template=flair_template)
         Templated.__init__(self, flair_template_id=flair_template._id,
                            wrapped_user=wrapped_user)
 
 class FlairPrefs(CachedTemplate):
     def __init__(self):
-        sr_flair_enabled = getattr(c.site, 'flair_enabled', False)
+        sr_flair_enabled = getattr(c.site, 'flair_enabled', True)
         user_flair_enabled = getattr(c.user, 'flair_%s_enabled' % c.site._id,
                                      True)
         sr_flair_self_assign_enabled = getattr(
             c.site, 'flair_self_assign_enabled', True)
-        wrapped_user = WrappedUser(c.user, subreddit=c.site,
+        wrapped_user = WrappedUser(c.user, subsciteit=c.site,
                                    force_show_flair=True,
                                    include_flair_selector=True)
         CachedTemplate.__init__(
@@ -2581,7 +2761,7 @@ class FlairPrefs(CachedTemplate):
             wrapped_user=wrapped_user)
 
 class FlairSelector(CachedTemplate):
-    """Provide user with flair options according to subreddit settings."""
+    """Provide user with flair options according to subsciteit settings."""
     def __init__(self, user=None):
         if user is None:
             user = c.user
@@ -2592,7 +2772,7 @@ class FlairSelector(CachedTemplate):
         text = getattr(user, attr_pattern % 'text', '')
         css_class = getattr(user, attr_pattern % 'css_class', '')
 
-        ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
+        ids = FlairTemplateBySubsciteitIndex.get_template_ids(c.site._id)
         template_dict = FlairTemplate._byID(ids)
         templates = [template_dict[i] for i in ids]
         for template in templates:
@@ -2607,7 +2787,7 @@ class FlairSelector(CachedTemplate):
         if c.site.flair_self_assign_enabled or admin:
             choices = [
                 WrappedUser(
-                    user, subreddit=c.site, force_show_flair=True,
+                    user, subsciteit=c.site, force_show_flair=True,
                     flair_template=template,
                     flair_text_editable=admin or template.text_editable)
                 for template in templates]
@@ -2621,7 +2801,7 @@ class FlairSelector(CachedTemplate):
                         choice.flair_text = text
                     break
 
-        wrapped_user = WrappedUser(user, subreddit=c.site,
+        wrapped_user = WrappedUser(user, subsciteit=c.site,
                                    force_show_flair=True)
 
         Templated.__init__(self, text=text, css_class=css_class,
@@ -2688,7 +2868,7 @@ class EnemyList(UserList):
 
 
 class ContributorList(UserList):
-    """Contributor list on a restricted/private reddit."""
+    """Contributor list on a restricted/private sciteit."""
     type = 'contributor'
 
     @property
@@ -2697,10 +2877,10 @@ class ContributorList(UserList):
 
     @property
     def table_title(self):
-        return _("approved submitters for %(reddit)s") % dict(reddit = c.site.name)
+        return _("approved submitters for %(sciteit)s") % dict(sciteit = c.site.name)
 
     def user_ids(self):
-        if c.site.name == g.lounge_reddit:
+        if c.site.name == g.lounge_sciteit:
             return [] # /r/lounge has too many subscribers to load without timing out,
                       # and besides, some people might not want this list to be so
                       # easily accessible.
@@ -2708,7 +2888,7 @@ class ContributorList(UserList):
             return c.site.contributors
 
 class ModList(UserList):
-    """Moderator list for a reddit."""
+    """Moderator list for a sciteit."""
     type = 'moderator'
 
     @property
@@ -2717,7 +2897,7 @@ class ModList(UserList):
 
     @property
     def table_title(self):
-        return _("moderators of %(reddit)s") % dict(reddit = c.site.name)
+        return _("moderators of %(sciteit)s") % dict(sciteit = c.site.name)
 
     def editable_fn(self, user):
         if not c.user_is_loggedin:
@@ -2731,7 +2911,7 @@ class ModList(UserList):
         return c.site.moderators
 
 class BannedList(UserList):
-    """List of users banned from a given reddit"""
+    """List of users banned from a given sciteit"""
     type = 'banned'
 
     @property
@@ -2782,12 +2962,12 @@ class DetailsPage(LinkInfoPage):
 
 class Cnameframe(Templated):
     """The frame page."""
-    def __init__(self, original_path, subreddit, sub_domain):
+    def __init__(self, original_path, subsciteit, sub_domain):
         Templated.__init__(self, original_path=original_path)
-        if sub_domain and subreddit and original_path:
-            self.title = "%s - %s" % (subreddit.title, sub_domain)
-            u = UrlParser(subreddit.path + original_path)
-            u.hostname = get_domain(cname = False, subreddit = False)
+        if sub_domain and subsciteit and original_path:
+            self.title = "%s - %s" % (subsciteit.title, sub_domain)
+            u = UrlParser(subsciteit.path + original_path)
+            u.hostname = get_domain(cname = False, subsciteit = False)
             u.update_query(**request.get.copy())
             u.put_in_frame()
             self.frame_target = u.unparse()
@@ -2801,8 +2981,8 @@ class FrameBuster(Templated):
 class SelfServiceOatmeal(Templated):
     pass
 
-class PromotePage(Reddit):
-    create_reddit_box  = False
+class PromotePage(Sciteit):
+    create_sciteit_box  = False
     submit_box         = False
     extension_handling = False
     searchbox          = False
@@ -2831,7 +3011,7 @@ class PromotePage(Reddit):
             nav_menus = [menu]
 
         kw['show_sidebar'] = False
-        Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
+        Sciteit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
 
 class PromoteLinkForm(Templated):
     def __init__(self, sr = None, link = None, listing = '',
@@ -2865,9 +3045,9 @@ class PromoteLinkForm(Templated):
         self.link = None
         if link:
             self.sr_searches = simplejson.dumps(popular_searches())
-            self.subreddits = (Subreddit.submit_sr_names(c.user) or
-                               Subreddit.submit_sr_names(None))
-            self.default_sr = self.subreddits[0] if self.subreddits \
+            self.subsciteits = (Subsciteit.submit_sr_names(c.user) or
+                               Subsciteit.submit_sr_names(None))
+            self.default_sr = self.subsciteits[0] if self.subsciteits \
                               else g.default_sr
             # have the promo code wrap the campaigns for rendering
             self.link = promote.editable_add_props(link)
@@ -2914,9 +3094,9 @@ class Roadblocks(Templated):
         self.startdate = startdate.strftime("%m/%d/%Y")
         self.enddate   = enddate  .strftime("%m/%d/%Y")
         self.sr_searches = simplejson.dumps(popular_searches())
-        self.subreddits = (Subreddit.submit_sr_names(c.user) or
-                           Subreddit.submit_sr_names(None))
-        self.default_sr = self.subreddits[0] if self.subreddits \
+        self.subsciteits = (Subsciteit.submit_sr_names(c.user) or
+                           Subsciteit.submit_sr_names(None))
+        self.default_sr = self.subsciteits[0] if self.subsciteits \
                           else g.default_sr
 
 class TabbedPane(Templated):
@@ -3009,7 +3189,6 @@ class SelfTextChild(LinkChild):
         u = UserText(self.link, self.link.selftext,
                      editable = c.user == self.link.author,
                      nofollow = self.nofollow,
-                     target="_top" if c.cname else None,
                      expunged=self.link.expunged)
         return u.render()
 
@@ -3143,13 +3322,13 @@ class PromotedTraffic(Traffic):
     def as_csv(self):
         return to_csv(self.to_iter(localize = False, total = True))
 
-class RedditTraffic(Traffic):
+class SciteitTraffic(Traffic):
     """
-    fetches hourly and daily traffic for the current reddit.  If the
-    current reddit is a default subreddit, fetches the site-wide
+    fetches hourly and daily traffic for the current sciteit.  If the
+    current sciteit is a default subsciteit, fetches the site-wide
     uniques and includes monthly totals.  In this latter case, getter
     methods are available for computing breakdown of site trafffic by
-    reddit.
+    sciteit.
     """
     def __init__(self):
         self.has_data = False
@@ -3159,7 +3338,7 @@ class RedditTraffic(Traffic):
             if c.default_sr:
                 data = load_traffic(ival, "total", "")
             else:
-                data = load_traffic(ival, "reddit", c.site.name)
+                data = load_traffic(ival, "sciteit", c.site.name)
             if not data:
                 break
             slices = [("uniques",     (0, 2) if c.site.domain else (0,),
@@ -3197,9 +3376,9 @@ class RedditTraffic(Traffic):
                                        for x in imp_by_day]
         Templated.__init__(self)
 
-    def reddits_summary(self):
+    def sciteits_summary(self):
         if c.default_sr:
-            data = map(list, load_summary("reddit"))
+            data = map(list, load_summary("sciteit"))
             data.sort(key = lambda x: x[1][1], reverse = True)
             for d in data:
                 name = d[0]
@@ -3209,7 +3388,7 @@ class RedditTraffic(Traffic):
                         break
                 else:
                     try:
-                        name = Subreddit._by_name(name)
+                        name = Subsciteit._by_name(name)
                     except NotFound:
                         name = DomainSR(name)
                 d[0] = name
@@ -3321,7 +3500,7 @@ class TrafficGraph(Templated):
         Templated.__init__(self)
 
 
-class RedditAds(Templated):
+class SciteitAds(Templated):
     def __init__(self, **kw):
         self.sr_name = c.site.name
         self.adsrs = AdSR.by_sr_merged(c.site)
@@ -3633,28 +3812,28 @@ class HouseAd(CachedTemplate):
 class ComScore(CachedTemplate):
     pass
 
-def render_ad(reddit_name=None, codename=None, keyword=None):
-    if not reddit_name:
-        reddit_name = g.default_sr
+def render_ad(sciteit_name=None, codename=None, keyword=None):
+    if not sciteit_name:
+        sciteit_name = g.default_sr
         if g.frontpage_dart:
-            return Dart_Ad("reddit.dart", reddit_name, keyword).render()
+            return Dart_Ad("sciteit.dart", sciteit_name, keyword).render()
 
     try:
-        sr = Subreddit._by_name(reddit_name, stale=True)
+        sr = Subsciteit._by_name(sciteit_name, stale=True)
     except NotFound:
-        return Dart_Ad("reddit.dart", g.default_sr, keyword).render()
+        return Dart_Ad("sciteit.dart", g.default_sr, keyword).render()
 
     if sr.over_18:
-        dartsite = "reddit.dart.nsfw"
+        dartsite = "sciteit.dart.nsfw"
     else:
-        dartsite = "reddit.dart"
+        dartsite = "sciteit.dart"
 
     if keyword:
-        return Dart_Ad(dartsite, reddit_name, keyword).render()
+        return Dart_Ad(dartsite, sciteit_name, keyword).render()
 
     if codename:
         if codename == "DART":
-            return Dart_Ad(dartsite, reddit_name).render()
+            return Dart_Ad(dartsite, sciteit_name).render()
         else:
             try:
                 ad = Ad._by_codename(codename)
@@ -3672,7 +3851,7 @@ def render_ad(reddit_name=None, codename=None, keyword=None):
     total_weight = sum(t[1] for t in ads.values())
 
     if total_weight == 0:
-        log_text("no ads", "No ads found for %s" % reddit_name, "error")
+        log_text("no ads", "No ads found for %s" % sciteit_name, "error")
         return ""
 
     lotto = random.randint(0, total_weight - 1)
@@ -3683,7 +3862,7 @@ def render_ad(reddit_name=None, codename=None, keyword=None):
             winner = t[0]
 
             if winner.codename == "DART":
-                return Dart_Ad(dartsite, reddit_name).render()
+                return Dart_Ad(dartsite, sciteit_name).render()
             else:
                 attrs = winner.important_attrs()
                 return HouseAd(**attrs).render()
@@ -3692,12 +3871,12 @@ def render_ad(reddit_name=None, codename=None, keyword=None):
 
     log_text("no winner",
              "No winner found for /r/%s, total_weight=%d" %
-             (reddit_name, total_weight),
+             (sciteit_name, total_weight),
              "error")
 
-    return Dart_Ad(dartsite, reddit_name).render()
+    return Dart_Ad(dartsite, sciteit_name).render()
 
-class TryCompact(Reddit):
+class TryCompact(Sciteit):
     def __init__(self, dest, **kw):
         dest = dest or "/"
         u = UrlParser(dest)
@@ -3709,7 +3888,7 @@ class TryCompact(Reddit):
 
         u.set_extension("mobile")
         self.mobile = u.unparse()
-        Reddit.__init__(self, **kw)
+        Sciteit.__init__(self, **kw)
 
 class AccountActivityPage(BoringPage):
     def __init__(self):

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -62,7 +62,7 @@ class QueueMap(object):
         raise NotImplementedError
 
 
-class RedditQueueMap(QueueMap):
+class SciteitQueueMap(QueueMap):
     def queues(self):
         self._q('scraper_q')
         self._q('newcomments_q')
@@ -83,7 +83,7 @@ class RedditQueueMap(QueueMap):
     def bindings(self):
         self.newlink_bindings()
         self.newcomment_bindings()
-        self.newsubreddit_bindings()
+        self.newsubsciteit_bindings()
 
     def newlink_bindings(self):
         self._bind('new_link', 'scraper_q')
@@ -95,7 +95,7 @@ class RedditQueueMap(QueueMap):
         self._bind('new_comment', 'newcomments_q')
         self._bind('new_comment', 'commentstree_q')
 
-    def newsubreddit_bindings(self):
+    def newsubsciteit_bindings(self):
         pass
 
 try:

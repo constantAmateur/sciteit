@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -28,7 +28,7 @@
 <%namespace file="printable.html" import="arrow, score" />
 <%namespace file="utils.html" import="img_link" />
 
-<%def name="submiturl(url, title='')">${("http://%s/submit" % get_domain(cname = c.cname, subreddit = not c.cname)) + query_string(dict(url=url, title=title))}</%def>
+<%def name="submiturl(url, title='')">${("http://%s/submit" % get_domain(cname = c.cname, subsciteit = not c.cname)) + query_string(dict(url=url, title=title))}</%def>
 
 <%def name="submitlink(url, title='', text='submit')">
   <a href='${submiturl(url, title)}' target='${thing.target}'>${text}</a>
@@ -56,7 +56,7 @@
                  width="${choose_width(thing, thing.width)}">
   <div class="headimgcell">
     <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">
-      <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
+      <img src="http://www.sciteit.com/static/blog_head.png" alt=""/>
     </a>
   </div>
   %if thing._fullname:
@@ -89,15 +89,15 @@
         &nbsp;<br />
       %endif
     %else:
-      <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
+      <img src="http://www.sciteit.com/static/blog_head.png" alt=""/>
       ${submitlink(thing.url, thing.title, 'submit to')}
     %endif
       %if thing.bgcolor:
-      <div class="bottomreddit" style="background-color: #${thing.bgcolor}">
+      <div class="bottomsciteit" style="background-color: #${thing.bgcolor}">
       %else:
-      <div class="bottomreddit">
+      <div class="bottomsciteit">
       %endif
-      <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">reddit</a>
+      <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">sciteit</a>
     </div>
 </%self:class_def>
 </%def>
@@ -142,7 +142,7 @@
       &nbsp;<br />
       %endif
     %else:
-      <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
+      <img src="http://www.sciteit.com/static/blog_head.png" alt=""/>
       ${submitlink(thing.url, thing.title, 'submit to')}
     %endif
 </%self:class_def>
@@ -160,7 +160,7 @@
         fullname = thing._fullname
         ups = thing.upvotes
         downs = thing.downvotes
-        link = "http://%s%s" % (get_domain(cname = c.cname, subreddit = False),
+        link = "http://%s%s" % (get_domain(cname = c.cname, subsciteit = False),
                                 thing.make_permalink_slow())
      else:
         fullname = ""
@@ -214,9 +214,9 @@
       <li>
         <a href="${link}" target="_new">
           %if thing._fullname:
-            ${_("Discuss at the %(name)s reddit") % dict(name = c.site.name)}
+            ${_("Discuss at the %(name)s sciteit") % dict(name = c.site.name)}
           %else:
-            ${_("Submit to the %(name)s reddit") % dict(name = c.site.name)}
+            ${_("Submit to the %(name)s sciteit") % dict(name = c.site.name)}
           %endif
         </a>
       </li>

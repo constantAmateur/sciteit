@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -19,11 +19,11 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.models import Subreddit, SubredditPopularityByLanguage
+from r2.models import Subsciteit, SubsciteitPopularityByLanguage
 from r2.lib.db.operators import desc
 from r2.lib import count
 from r2.lib.utils import fetch_things2, flatten
-from r2.lib.memoize import memoize
+from pylons import c
 
 # the length of the stored per-language list
 limit = 1000
@@ -31,7 +31,7 @@ limit = 1000
 def set_downs():
     sr_counts = count.get_sr_counts()
     names = [k for k, v in sr_counts.iteritems() if v != 0]
-    srs = Subreddit._by_fullname(names)
+    srs = Subsciteit._by_fullname(names)
     for name in names:
         sr,c = srs[name], sr_counts[name]
         if c != sr._downs and c > 0:
@@ -43,21 +43,21 @@ def cache_lists():
         srs.sort(key=lambda s: s._downs, reverse=True)
         return srs[:limit]
 
-    # bylang    =:= dict((lang, over18_state) -> [Subreddit])
+    # bylang    =:= dict((lang, over18_state) -> [Subsciteit])
     # lang      =:= all | lang()
     # nsfwstate =:= no_over18 | allow_over18 | only_over18
     bylang = {}
 
-    for sr in fetch_things2(Subreddit._query(sort=desc('_date'),
+    for sr in fetch_things2(Subsciteit._query(sort=desc('_date'),
                                              data=True)):
         aid = getattr(sr, 'author_id', None)
         if aid is not None and aid < 0:
-            # skip special system reddits like promos
+            # skip special system sciteits like promos
             continue
 
         type = getattr(sr, 'type', 'private')
         if type not in ('public', 'restricted'):
-            # skips reddits that can't appear in the default list
+            # skips sciteits that can't appear in the default list
             # because of permissions
             continue
 
@@ -83,15 +83,13 @@ def cache_lists():
         print "For %s/%s setting %s" % (lang, over18,
                                         map(lambda sr: sr.name, srs[:50]))
 
-        SubredditPopularityByLanguage._set_values(lang, {over18: sr_tuples})
+        SubsciteitPopularityByLanguage._set_values(lang, {over18: sr_tuples})
 
 def run():
     set_downs()
     cache_lists()
 
-# this relies on c.content_langs being sorted to increase cache hit rate
-@memoize('sr_pops.pop_reddits', time=3600, stale=True)
-def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
+def pop_sciteits(langs, over18, over18_only, filter_allow_top = False):
     if not over18:
         over18_state = 'no_over18'
     elif over18_only:
@@ -110,7 +108,7 @@ def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
             seen_langs.add(lang)
 
     # dict(lang_key -> [(_downs, allow_top, sr_id)])
-    bylang = SubredditPopularityByLanguage._byID(unique_langs,
+    bylang = SubsciteitPopularityByLanguage._byID(unique_langs,
                                                  properties=[over18_state])
     tups = flatten([lang_lists[over18_state] for lang_lists
                                              in bylang.values()])
@@ -123,5 +121,9 @@ def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
     if len(tups) > 1:
         # if there was only one returned, it's already sorted
         tups.sort(key = lambda tpl: tpl[0], reverse=True)
+    #Ignore the lot of them and just print the daughters of c.site
+    #tups=[(2,True,sr._id) for sr in getattr(c.site,"children",[])]
+    #print c.site
+    #print tups
 
     return map(lambda tpl: tpl[2], tups)

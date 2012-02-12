@@ -1,0 +1,33 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Sciteit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%namespace file="utils.html" import="plain_link"/>
+
+<div class="instructions">
+  <h1>Searching</h1>
+  <p>The reddit code on which Sciteit is based uses indextank to power the majority of their searches.  Unfortunately, indextank no longer takes new registrations and as such a new search provider has had to be implemented (solr, which reddit used before it switched to indextank).  This is working but there are a few limitations currently.  The "Advanced search" parameters shouldn't do anything.  Essentially you're limited to two types of search</p>
+<p>1. Search for links.  This will search for links (posted content) that has a title or author matching your query.  The search can be restricted to a given subsciteit by clicking the appropriate box.  This is the function of the main search box. </p>
+<p>2. Search for a subsciteit.  As the name suggests, this can be used to find a subsciteit you are looking for.  This search can be accessed by clicking on the
+&#32;
+<a href="/sciteits">subsciteit</a> button in help.</p>
+&#32;
+<p> If something you just added isn't showing up on search, that's because it hasn't been indexed yet.  Please be patient, the indexer will get to it in a few minutes.</p>
+</div>

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -45,7 +45,6 @@ def score_changes(amount, old_amount):
 
 class CassandraVote(tdb_cassandra.Relation):
     _use_db = False
-    _connection_pool = 'main'
 
     _bool_props = ('valid_user', 'valid_thing', 'organic')
     _str_props  = ('name', # one of '-1', '0', '1'
@@ -85,7 +84,6 @@ class CassandraVote(tdb_cassandra.Relation):
 class VotesByLink(tdb_cassandra.View):
     _use_db = True
     _type_prefix = 'VotesByLink'
-    _connection_pool = 'main'
 
     # _view_of = CassandraLinkVote
 
@@ -101,7 +99,6 @@ class VotesByLink(tdb_cassandra.View):
 class VotesByDay(tdb_cassandra.View):
     _use_db = True
     _type_prefix = 'VotesByDay'
-    _connection_pool = 'main'
 
     # _view_of = CassandraLinkVote
 
@@ -132,9 +129,8 @@ class VotesByDay(tdb_cassandra.View):
 
 class CassandraLinkVote(CassandraVote):
     _use_db = True
-    _type_prefix = 'LinkVote'
+    _type_prefix = 'r6'
     _cf_name = 'LinkVote'
-    _read_consistency_level = tdb_cassandra.CL.ONE
 
     # these parameters aren't actually meaningful, they just help
     # keep track
@@ -157,9 +153,8 @@ class CassandraLinkVote(CassandraVote):
 
 class CassandraCommentVote(CassandraVote):
     _use_db = True
-    _type_prefix = 'CommentVote'
+    _type_prefix = 'r5'
     _cf_name = 'CommentVote'
-    _read_consistency_level = tdb_cassandra.CL.ONE
 
     # these parameters aren't actually meaningful, they just help
     # keep track
@@ -177,7 +172,7 @@ class Vote(MultiRelation('vote',
         from r2.lib.count import incr_sr_count
         from r2.lib.db import queries
 
-        sr = obj.subreddit_slow
+        sr = obj.subsciteit_slow
         kind = obj.__class__.__name__.lower()
         karma = sub.karma(kind, sr)
 
@@ -337,7 +332,7 @@ def test():
     print 'fast_query', CassandraLinkVote._fast_query('abc', ['def'])
 
     assert CassandraLinkVote._fast_query('abc', 'def') == v2
-    assert CassandraLinkVote._byID('abc_def') == CassandraLinkVote._by_fullname('LinkVote_abc_def')
+    assert CassandraLinkVote._byID('abc_def') == CassandraLinkVote._by_fullname('r6_abc_def')
 
     print 'all', list(CassandraLinkVote._all()), list(VotesByLink._all())
 

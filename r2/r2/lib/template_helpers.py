@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import *
-from filters import unsafe, websafe, _force_unicode
+from filters import unsafe, websafe
 from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 
 from r2.lib.media import s3_direct_url
@@ -33,12 +33,31 @@ import random
 import urlparse
 from pylons import g, c
 from pylons.i18n import _, ungettext
-from paste.util.mimeparse import desired_matches
 
 def is_encoding_acceptable(encoding_to_check):
-    "Check if a content encoding is acceptable to the user agent."
+    """"Check if a content encoding is acceptable to the user agent.
+
+    An encoding is determined acceptable if the encoding (or the special '*' encoding)
+    is specified in the Accept-Encoding header with a quality value > 0.
+    """
     header = request.headers.get('Accept-Encoding', '')
-    return 'gzip' in desired_matches(['gzip'], header)
+    encodings = header.split(',')
+
+    for value in encodings:
+        if ';' not in value:
+            name = value.strip()
+        else:
+            coding_name, quality = value.split(';')
+            if '=' not in quality:
+                continue
+            q, value = quality.split('=')
+            if float(value) == 0:
+                continue
+            name = coding_name.strip()
+
+        if name in (encoding_to_check, '*'):
+            return True
+    return False
 
 def static(path, allow_gzip=True):
     """
@@ -62,12 +81,12 @@ def static(path, allow_gzip=True):
         scheme = 'http'
         domain = g.static_domain
         query = None
-        suffix = '.gzip' if should_gzip and g.static_pre_gzipped else ''
+        suffix = '.gz' if should_gzip and g.static_pre_gzipped else ''
     elif c.secure and g.static_secure_domain:
         scheme = 'https'
         domain = g.static_secure_domain
         query = None
-        suffix = '.gzip' if should_gzip and g.static_secure_pre_gzipped else ''
+        suffix = '.gz' if should_gzip and g.static_secure_pre_gzipped else ''
     else:
         path_components.append(c.site.static_path)
         query = None
@@ -113,20 +132,20 @@ def js_config():
     config = {
         # is the user logged in?
         "logged": c.user_is_loggedin and c.user.name,
-        # the subreddit's name (for posts)
+        # the subsciteit's name (for posts)
         "post_site": c.site.name if not c.default_sr else "",
         # are we in an iframe?
         "cnameframe": bool(c.cname and not c.authorized_cname),
         # this page's referer
-        "referer": _force_unicode(request.referer) or "",
+        "referer": request.referer or "",
         # the user's voting hash
         "modhash": c.modhash or False,
         # the current rendering style
         "renderstyle": c.render_style,
         # current domain
-        "cur_domain": get_domain(cname=c.frameless_cname, subreddit=False, no_www=True),
+        "cur_domain": get_domain(cname=c.frameless_cname, subsciteit=False, no_www=True),
         # where do ajax requests go?
-        "ajax_domain": get_domain(cname=c.authorized_cname, subreddit=False),
+        "ajax_domain": get_domain(cname=c.authorized_cname, subsciteit=False),
         "extension": c.extension,
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
         # debugging?
@@ -138,7 +157,7 @@ def js_config():
           "submitting": _("submitting..."),
           "loading": _("loading...")
         },
-        "is_fake": isinstance(c.site, FakeSubreddit),
+        "is_fake": isinstance(c.site, FakeSubsciteit),
         "tracking_domain": g.tracking_domain,
         "adtracker_url": g.adtracker_url,
         "clicktracker_url": g.clicktracker_url,
@@ -153,7 +172,7 @@ def generateurl(context, path, **kw):
     return path
 
 def class_dict():
-    t_cls = [Link, Comment, Message, Subreddit]
+    t_cls = [Link, Comment, Message, Subsciteit]
     l_cls = [Listing, OrganicListing]
 
     classes  = [('%s: %s') % ('t'+ str(cl._type_id), cl.__name__ ) for cl in t_cls] \
@@ -236,7 +255,23 @@ def replace_render(listing, item, render_func):
             if style == "compact":
                 com_label = unicode(item.num_comments)
             replacements['numcomments'] = com_label
-            replacements['commentcls'] = com_cls
+            #replacements['criticismcls'] = com_cls
+        #if hasattr(item, "num_criticisms"):
+        #    if not item.num_criticisms:
+        #        # generates "criticism" the imperative verb
+	#	#The verb line not getting removed is just to do with the internationalization being crummy, we can safetly remove it without breaking anything else
+        #        crit_label = _("criticise")
+        #        crit_cls = 'criticisms empty'
+        #    else:
+        #        # generates "XX criticisms" as a noun
+        #        crit_label = ungettext("criticism", "criticisms", item.num_criticisms)
+        #        crit_label = strings.number_label % dict(num=item.num_criticisms,
+        #                                                thing=crit_label)
+        #        crit_cls = 'criticisms'
+        #    if style == "compact":
+        #        crit_label = unicode(item.num_criticisms)
+        #    replacements['numcriticisms'] = crit_label
+        #    replacements['criticismcls'] = crit_cls
 
         replacements['display'] =  "" if display else "style='display:none'"
 
@@ -276,10 +311,10 @@ def replace_render(listing, item, render_func):
 
     return _replace_render
 
-def get_domain(cname = False, subreddit = True, no_www = False):
+def get_domain(cname = False, subsciteit = True, no_www = False):
     """
-    returns the domain on the current subreddit, possibly including
-    the subreddit part of the path, suitable for insertion after an
+    returns the domain on the current subsciteit, possibly including
+    the subsciteit part of the path, suitable for insertion after an
     "http://" and before a fullpath (i.e., something including the
     first '/') in a template.  The domain is updated to include the
     current port (request.port).  The effect of the arguments is:
@@ -291,8 +326,8 @@ def get_domain(cname = False, subreddit = True, no_www = False):
      * cname: whether to respect the value of c.cname and return
        c.site.domain rather than g.domain as the host name.
 
-     * subreddit: if a cname is not used in the resulting path, flags
-       whether or not to append to the domain the subreddit path (sans
+     * subsciteit: if a cname is not used in the resulting path, flags
+       whether or not to append to the domain the subsciteit path (sans
        the trailing path).
 
     """
@@ -307,7 +342,7 @@ def get_domain(cname = False, subreddit = True, no_www = False):
         domain = site.domain
     if hasattr(request, "port") and request.port:
         domain += ":" + str(request.port)
-    if (not ccname or not cname) and subreddit:
+    if (not ccname or not cname) and subsciteit:
         domain += site.path.rstrip('/')
     return domain
 
@@ -322,7 +357,7 @@ def dockletStr(context, type, browser):
     elif type == "submit":
         return ("javascript:location.href='http://"+site_domain+
                "/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)")
-    elif type == "reddit toolbar":
+    elif type == "sciteit toolbar":
         return ("javascript:%20var%20h%20=%20window.location.href;%20h%20=%20'http://" +
                 site_domain + "/s/'%20+%20escape(h);%20window.location%20=%20h;")
     else:
@@ -346,7 +381,7 @@ def dockletStr(context, type, browser):
 def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_extension=True):
     """
     Given a path (which may be a full-fledged url or a relative path),
-    parses the path and updates it to include the subreddit path
+    parses the path and updates it to include the subsciteit path
     according to the rules set by its arguments:
 
      * force_hostname: if True, force the url's hotname to be updated
@@ -370,14 +405,14 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_e
 
     u = UrlParser(path)
     if sr_path and (nocname or not c.cname):
-        u.path_add_subreddit(c.site)
+        u.path_add_subsciteit(c.site)
 
     if not u.hostname or force_hostname:
         if c.secure:
             u.hostname = request.host
         else:
             u.hostname = get_domain(cname = (c.cname and not nocname),
-                                    subreddit = False)
+                                    subsciteit = False)
     
     if c.secure:
         u.scheme = "https"
@@ -427,7 +462,7 @@ def choose_width(link, width):
             return 110
 
 def panel_size(state):
-    "the frame.cols of the reddit-toolbar's inner frame"
+    "the frame.cols of the sciteit-toolbar's inner frame"
     return '400px, 100%' if state =='expanded' else '0px, 100%x'
 
 # Appends to the list "attrs" a tuple of:
@@ -464,9 +499,9 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
         priority = 4
         cssclass = 'admin'
         if not label:
-            label = _('reddit admin, speaking officially')
+            label = _('sciteit admin, speaking officially')
         if not link:
-            link = '/help/faq#Whorunsreddit'
+            link = '/help/faq#Whorunssciteit'
     elif kind in ('X', '@'):
         priority = 5
         cssclass = 'gray'

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -31,7 +31,6 @@ from r2.lib import filters
 from r2.lib.log import log_text
 
 from pylons import g
-from pylons.i18n import _
 import time, sha
 from copy import copy
 from datetime import datetime, timedelta
@@ -43,11 +42,11 @@ class Account(Thing):
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
-                                               'reported', 'gold_creddits', )
+                                               'reported', 'gold_csciteits', )
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,
-                     pref_frame = False,
+                     pref_frame = True,
                      pref_frame_commentspanel = False,
                      pref_newwindow = False,
                      pref_clickgadget = 5,
@@ -87,7 +86,7 @@ class Account(Thing):
                      spammer = 0,
                      sort_options = {},
                      has_subscribed = False,
-                     pref_media = 'subreddit',
+                     pref_media = 'subsciteit',
                      share = {},
                      wiki_override = None,
                      email = "",
@@ -96,8 +95,8 @@ class Account(Thing):
                      pref_show_promote = None,
                      gold = False,
                      gold_charter = False,
-                     gold_creddits = 0,
-                     gold_creddit_escrow = 0,
+                     gold_csciteits = 0,
+                     gold_csciteit_escrow = 0,
                      )
 
     def karma(self, kind, sr = None):
@@ -122,7 +121,7 @@ class Account(Thing):
 
     def incr_karma(self, kind, sr, amt):
         if sr.name.startswith('_'):
-            g.log.info("Ignoring karma increase for subreddit %r" % (sr.name,))
+            g.log.info("Ignoring karma increase for subsciteit %r" % (sr.name,))
             return
 
         prop = '%s_%s_karma' % (sr.name, kind)
@@ -160,7 +159,7 @@ class Account(Thing):
             return True
 
     def all_karmas(self):
-        """returns a list of tuples in the form (name, hover-text, link_karma,
+        """returns a list of tuples in the form (name, link_karma,
         comment_karma)"""
         link_suffix = '_link_karma'
         comment_suffix = '_comment_karma'
@@ -172,18 +171,19 @@ class Account(Thing):
             elif k.endswith(comment_suffix):
                 sr_names.add(k[:-len(comment_suffix)])
         for sr_name in sr_names:
-            karmas.append((sr_name, None,
+            karmas.append((sr_name,
                            self._t.get(sr_name + link_suffix, 0),
                            self._t.get(sr_name + comment_suffix, 0)))
 
-        karmas.sort(key = lambda x: abs(x[2] + x[3]), reverse=True)
+        karmas.sort(key = lambda x: abs(x[1] + x[2]), reverse=True)
 
-        old_link_karma = self._t.get('link_karma', 0)
-        old_comment_karma = self._t.get('comment_karma', 0)
-        if old_link_karma or old_comment_karma:
-            karmas.append((_('ancient history'),
-                           _('really obscure karma from before it was cool to track per-subreddit'),
-                           old_link_karma, old_comment_karma))
+        karmas.insert(0, ('total',
+                          self.karma('link'),
+                          self.karma('comment')))
+
+        karmas.append(('old',
+                       self._t.get('link_karma', 0),
+                       self._t.get('comment_karma', 0)))
 
         return karmas
 
@@ -213,7 +213,7 @@ class Account(Thing):
         return id_time + ',' + sha.new(to_hash).hexdigest()
 
     def needs_captcha(self):
-        return not g.disable_captcha and self.link_karma < 1
+        return self.link_karma < 1 and not g.disable_captcha
 
     def modhash(self, rand=None, test=False):
         return modhash(self, rand = rand, test = test)
@@ -330,9 +330,9 @@ class Account(Thing):
             f._thing1.remove_enemy(f._thing2)
 
     @property
-    def subreddits(self):
-        from subreddit import Subreddit
-        return Subreddit.user_subreddits(self)
+    def subsciteits(self):
+        from subsciteit import Subsciteit
+        return Subsciteit.user_subsciteits(self)
 
     def recent_share_emails(self):
         return self.share.get('recent', set([]))

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -31,6 +31,7 @@ from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
 from r2.lib.jsontemplates import api_type
 from r2.lib.log import log_text
+from r2.lib.sr_rss import find_dups
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard
 from r2.lib.utils import constant_time_compare
@@ -58,11 +59,11 @@ def visible_promo(article):
     return True
 
 def can_view_link_comments(article):
-    return (article.subreddit_slow.can_view(c.user) and
+    return (article.subsciteit_slow.can_view(c.user) and
             visible_promo(article))
 
 def can_comment_link(article):
-    return (article.subreddit_slow.can_comment(c.user) and
+    return (article.subsciteit_slow.can_comment(c.user) and
             visible_promo(article))
 
 class Validator(object):
@@ -155,16 +156,7 @@ def api_validate(response_type=None):
         def _api_validate(*simple_vals, **param_vals):
             def val(fn):
                 def newfn(self, *a, **env):
-                    renderstyle = request.params.get("renderstyle")
-                    if renderstyle:
-                        c.render_style = api_type(renderstyle)
-                    elif not c.extension:
-                        # if the request URL included an extension, don't
-                        # touch the render_style, since it was already set by
-                        # set_extension. if no extension was provided, default
-                        # to response_type.
-                        c.render_style = api_type(response_type)
-
+                    c.render_style = api_type(request.params.get("renderstyle", response_type))
                     # generate a response object
                     if response_type == "html" and not request.params.get('api_type') == "json":
                         responder = JQueryResponse()
@@ -213,6 +205,7 @@ def validatedForm(self, self_method, responder, simple_vals, param_vals,
                   *a, **kw):
     # generate a form object
     form = responder(request.POST.get('id', "body"))
+    
 
     # clear out the status line as a courtesy
     form.set_html(".status", "")
@@ -398,15 +391,15 @@ class VCssMeasure(Validator):
     def run(self, value):
         return value if value and self.measure.match(value) else ''
 
-subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
+subsciteit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
 
 def chksrname(x):
-    #notice the space before reddit.com
-    if x in ('friends', 'all', ' reddit.com'):
+    #notice the space before sciteit.com
+    if x in ('friends', 'all', ' sciteit.com'):
         return False
 
     try:
-        return str(x) if x and subreddit_rx.match(x) else None
+        return str(x) if x and subsciteit_rx.match(x) else None
     except UnicodeEncodeError:
         return None
 
@@ -480,12 +473,12 @@ class VSelfText(VMarkdown):
 
     def get_max_length(self):
         if c.site.link_type == "self":
-            return self._max_length * 4
+            return self._max_length * 3
         return self._max_length
 
     max_length = property(get_max_length, set_max_length)
 
-class VSubredditName(VRequired):
+class VSubsciteitName(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.BAD_SR_NAME, *a, **kw)
 
@@ -495,12 +488,12 @@ class VSubredditName(VRequired):
             return self.error()
         else:
             try:
-                a = Subreddit._by_name(name)
-                return self.error(errors.SUBREDDIT_EXISTS)
+                a = Subsciteit._by_name(name)
+                return self.error(errors.SUBSCITEIT_EXISTS)
             except NotFound:
                 return name
 
-class VSubredditTitle(Validator):
+class VSubsciteitTitle(Validator):
     def run(self, title):
         if not title:
             self.set_error(errors.NO_TITLE)
@@ -509,7 +502,7 @@ class VSubredditTitle(Validator):
         else:
             return title
 
-class VSubredditDesc(Validator):
+class VSubsciteitDesc(Validator):
     def run(self, description):
         if description and len(description) > 500:
             self.set_error(errors.DESC_TOO_LONG)
@@ -538,38 +531,25 @@ def fullname_regex(thing_cls = None, multiple = False):
     return re.compile(r"\A" + pattern + r"\Z")
 
 class VByName(Validator):
-    # Lookup tdb_sql.Thing or tdb_cassandra.Thing objects by fullname. 
     splitter = re.compile('[ ,]+')
     def __init__(self, param, thing_cls = None, multiple = False,
-                 error = errors.NO_THING_ID, backend='sql', **kw):
+                 error = errors.NO_THING_ID, **kw):
         self.re = fullname_regex(thing_cls)
         self.multiple = multiple
         self._error = error
-        self.backend = backend
-
+        
         Validator.__init__(self, param, **kw)
     
     def run(self, items):
-        if self.backend == 'cassandra':
-            # tdb_cassandra.Thing objects can't use the regex
-            if items and self.multiple:
-                items = [item for item in self.splitter.split(items)]
-            if items:                        
-                try:
-                    return tdb_cassandra.Thing._by_fullname(items, return_dict=False)
-                except NotFound:
-                    pass
-        else:
-            if items and self.multiple:
-                items = [item for item in self.splitter.split(items)
-                         if item and self.re.match(item)]
-            if items and (self.multiple or self.re.match(items)):
-                try:
-                    return Thing._by_fullname(items, return_dict=False,
-                                              data=True)
-                except NotFound:
-                    pass
-
+        if items and self.multiple:
+            items = [item for item in self.splitter.split(items)
+                     if item and self.re.match(item)]
+        if items and (self.multiple or self.re.match(items)):
+            try:
+                return Thing._by_fullname(items, return_dict = False,
+                                          data=True)
+            except NotFound:
+                pass
         return self.set_error(self._error)
 
 class VByNameIfAuthor(VByName):
@@ -585,7 +565,7 @@ class VCaptcha(Validator):
     default_param = ('iden', 'captcha')
     
     def run(self, iden, solution):
-        if c.user.needs_captcha():
+        if (not c.user_is_loggedin or c.user.needs_captcha()):
             valid_captcha = captcha.valid_solution(iden, solution)
             if not valid_captcha:
                 self.set_error(errors.BAD_CAPTCHA)
@@ -619,12 +599,9 @@ class VAdmin(Validator):
 
 class VAdminOrAdminSecret(VAdmin):
     def run(self, secret):
-        '''If validation succeeds, return True if the secret was used,
-        False otherwise'''
         if secret and constant_time_compare(secret, g.ADMINSECRET):
-            return True
+            return
         super(VAdminOrAdminSecret, self).run()
-        return False
 
 class VVerifiedUser(VUser):
     def run(self):
@@ -690,11 +667,11 @@ class VSrModerator(Validator):
             abort(403, "forbidden")
 
 class VFlairManager(VSrModerator):
-    """Validates that a user is permitted to manage flair for a subreddit.
+    """Validates that a user is permitted to manage flair for a subsciteit.
        
     Currently this is the same as VSrModerator. It's a separate class to act as
     a placeholder if we ever need to give mods a way to delegate this aspect of
-    subreddit administration."""
+    subsciteit administration."""
     pass
 
 class VCanDistinguish(VByName):
@@ -707,8 +684,26 @@ class VCanDistinguish(VByName):
                 # will throw a legitimate 500 if this isn't a link or
                 # comment, because this should only be used on links and
                 # comments
-                subreddit = item.subreddit_slow
-                if how in ("yes", "no") and subreddit.can_distinguish(c.user):
+                subsciteit = item.subsciteit_slow
+                if how in ("yes", "no") and subsciteit.can_distinguish(c.user):
+                    return True
+                elif how in ("special", "no") and c.user_special_distinguish:
+                    return True
+
+        abort(403,'forbidden')
+
+class VCanNominate(VByName):
+    def run(self, thing_name, how):
+        if c.user_is_admin:
+	    return True
+        elif c.user_is_loggedin:
+            item = VByName.run(self, thing_name)
+            if item.author_id == c.user._id:
+                # will throw a legitimate 500 if this isn't a link or
+                # comment, because this should only be used on links and
+                # comments
+                subsciteit = item.subsciteit_slow
+                if how in ("yes", "no") and subsciteit.can_distinguish(c.user):
                     return True
                 elif how in ("special", "no") and c.user_special_distinguish:
                     return True
@@ -727,8 +722,8 @@ class VSrCanAlter(VByName):
                 # will throw a legitimate 500 if this isn't a link or
                 # comment, because this should only be used on links and
                 # comments
-                subreddit = item.subreddit_slow
-                if subreddit.can_distinguish(c.user):
+                subsciteit = item.subsciteit_slow
+                if subsciteit.can_distinguish(c.user):
                     return True
         abort(403,'forbidden')
 
@@ -741,10 +736,10 @@ class VSrCanBan(VByName):
             # will throw a legitimate 500 if this isn't a link or
             # comment, because this should only be used on links and
             # comments
-            subreddit = item.subreddit_slow
-            if subreddit.is_moderator(c.user):
+            subsciteit = item.subsciteit_slow
+            if subsciteit.is_moderator(c.user):
                 return 'mod'
-            # elif subreddit.is_contributor(c.user):
+            # elif subsciteit.is_contributor(c.user):
             #     return 'contributor'
         abort(403,'forbidden')
 
@@ -757,8 +752,8 @@ class VSrSpecial(VByName):
             # will throw a legitimate 500 if this isn't a link or
             # comment, because this should only be used on links and
             # comments
-            subreddit = item.subreddit_slow
-            if subreddit.is_special(c.user):
+            subsciteit = item.subsciteit_slow
+            if subsciteit.is_special(c.user):
                 return True
         abort(403,'forbidden')
 
@@ -788,10 +783,48 @@ class VSubmitParent(VByName):
         #else
         abort(403, "forbidden")
 
+class VSRParent(Validator):
+    def __init__(self, srname_param,current_sr):
+        #Should all be lower case except the g.default_sr
+    	self.rootAliases=["",g.default_sr]
+        Validator.__init__(self, srname_param)
+
+    def run(self, sr_name, link_type = None):
+	#If the name is root  
+	if sr_name is None or sr_name.lower() in self.rootAliases:
+	    sr_name = g.default_sr
+        if sr_name == g.default_sr and (not c.user_is_loggedin or not c.user_is_admin):
+            self.set_error(errors.SUBSCITEIT_ROOT_DENIED)
+            return None
+	#If we're root, that's ok, but we can't have a parent...
+	if c.site.name.lower()==g.default_sr.lower():
+	    return None
+
+        try:
+            sr = Subsciteit._by_name(str(sr_name).strip())
+        except (NotFound, AttributeError, UnicodeEncodeError):
+            self.set_error(errors.SUBSCITEIT_NOEXIST)
+            return
+
+        if not c.user_is_loggedin or not sr.can_submit(c.user):
+            self.set_error(errors.SUBSCITEIT_NOTALLOWED)
+            return
+	#The hardest part, checking for loops... Basically we can't set the parent to a current child...
+	from r2.lib.normalized_hot import expand_children
+	#The only way I think we could get this is when creating a new site, which should allow anything... 
+	#I'm still not 100% sure this is right
+	if c.site.name.lower()==g.default_sr.lower() or getattr(c.site,"_id",None) is None:
+	    current_kids = []
+	else:
+	    current_kids = expand_children(c.site._id,byID=True)
+	if sr._id in current_kids:
+	    self.set_error(errors.SUBSCITEIT_NOTALLOWED)
+
+        return sr._id
+
 class VSubmitSR(Validator):
-    def __init__(self, srname_param, linktype_param=None, promotion=False):
+    def __init__(self, srname_param, linktype_param = None):
         self.require_linktype = False
-        self.promotion = promotion
 
         if linktype_param:
             self.require_linktype = True
@@ -801,17 +834,17 @@ class VSubmitSR(Validator):
 
     def run(self, sr_name, link_type = None):
         if not sr_name:
-            self.set_error(errors.SUBREDDIT_REQUIRED)
+            self.set_error(errors.SUBSCITEIT_REQUIRED)
             return None
 
         try:
-            sr = Subreddit._by_name(str(sr_name).strip())
+            sr = Subsciteit._by_name(str(sr_name).strip())
         except (NotFound, AttributeError, UnicodeEncodeError):
-            self.set_error(errors.SUBREDDIT_NOEXIST)
+            self.set_error(errors.SUBSCITEIT_NOEXIST)
             return
 
-        if not c.user_is_loggedin or not sr.can_submit(c.user, self.promotion):
-            self.set_error(errors.SUBREDDIT_NOTALLOWED)
+        if not c.user_is_loggedin or not sr.can_submit(c.user):
+            self.set_error(errors.SUBSCITEIT_NOTALLOWED)
             return
 
         if self.require_linktype:
@@ -824,24 +857,6 @@ class VSubmitSR(Validator):
             elif link_type == 'self' and sr.link_type == 'link':
                 self.set_error(errors.NO_SELFS)
                 return
-
-        return sr
-
-class VSubscribeSR(VByName):
-    def __init__(self, srid_param, srname_param):
-        VByName.__init__(self, (srid_param, srname_param)) 
-
-    def run(self, sr_id, sr_name):
-        if sr_id:
-            return VByName.run(self, sr_id)
-        elif not sr_name:
-            return
-
-        try:
-            sr = Subreddit._by_name(str(sr_name).strip())
-        except (NotFound, AttributeError, UnicodeEncodeError):
-            self.set_error(errors.SUBREDDIT_NOEXIST)
-            return
 
         return sr
 
@@ -912,8 +927,6 @@ class VThrottledLogin(VLogin):
         self.vlength = VLength("user", max_length=100)
         
     def run(self, username, password):
-        if username:
-            username = username.strip()
         username = self.vlength.run(username)
 
         self.vdelay.run()
@@ -937,14 +950,14 @@ class VUrl(VRequired):
         self.lookup = lookup
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
-    def run(self, url, sr = None, resubmit=False):
-        if sr is None and not isinstance(c.site, FakeSubreddit):
+    def run(self, url, sr = None):
+        if sr is None and not isinstance(c.site, FakeSubsciteit):
             sr = c.site
         elif sr:
             try:
-                sr = Subreddit._by_name(str(sr))
+                sr = Subsciteit._by_name(str(sr))
             except (NotFound, UnicodeEncodeError):
-                self.set_error(errors.SUBREDDIT_NOEXIST)
+                self.set_error(errors.SUBSCITEIT_NOEXIST)
                 sr = None
         else:
             sr = None
@@ -958,7 +971,7 @@ class VUrl(VRequired):
         if url == 'self':
             if self.allow_self:
                 return url
-        elif not self.lookup or resubmit:
+        elif not self.lookup:
             return url
         elif url:
             try:
@@ -968,6 +981,7 @@ class VUrl(VRequired):
             except NotFound:
                 return url
         return self.error(errors.BAD_URL)
+
 
 class VOptionalExistingUname(VRequired):
     def __init__(self, item, allow_deleted=False, prefer_existing=False,
@@ -1015,14 +1029,14 @@ class VMessageRecipient(VExistingUname):
             return self.error()
         if name.startswith('#'):
             try:
-                s = Subreddit._by_name(name.strip('#'))
-                if isinstance(s, FakeSubreddit):
-                    raise NotFound, "fake subreddit"
+                s = Subsciteit._by_name(name.strip('#'))
+                if isinstance(s, FakeSubsciteit):
+                    raise NotFound, "fake subsciteit"
                 if s._spam:
                     raise NotFound, "banned community"
                 return s
             except NotFound:
-                self.set_error(errors.SUBREDDIT_NOEXIST)
+                self.set_error(errors.SUBSCITEIT_NOEXIST)
         else:
             account = VExistingUname.run(self, name)
             if account and account._id in c.user.enemies:
@@ -1114,6 +1128,29 @@ class VBid(VNumber):
                                                                  max=self.max))
             else:
                 return float(bid)
+
+class VRSS(Validator):
+    """
+    """
+    def run(self,rss_source):
+        if not rss_source:
+	    #We don't HAVE to have an rss_source
+            #return self.error(errors.NO_URL)
+	    return
+        url = utils.sanitize_url(rss_source)
+	#But if we do, it better be a sane url
+        if not url:
+            self.set_error(errors.BAD_URL)
+            return 
+	#Check if someone else is already using it (currently disabled), don't get fancy now...
+        if find_dups(url,fast=True):
+            self.set_error(errors.ALREADY_SUB)
+	    return
+	#Check if the url is a valid rss with the required fields (currently disabled)
+	if False:
+            self.set_error(errors.BAD_RSS)
+	    return
+	return url
 
 
 class VCssName(Validator):
@@ -1325,11 +1362,11 @@ class VImageType(Validator):
             return 'png'
         return img_type
 
-class VSubredditSponsorship(VInt):
+class VSubsciteitSponsorship(VInt):
     max = 1
     min = 0
     def run(self, val):
-        s = super(VSubredditSponsorship, self).run(val)
+        s = super(VSubsciteitSponsorship, self).run(val)
         if s and not c.user_is_admin:
             abort(403, "forbidden")
         return s
@@ -1391,6 +1428,11 @@ class VCnameDomain(Validator):
             except UnicodeEncodeError:
                 self.set_error(errors.BAD_CNAME)
 
+class VTranslation(Validator):
+    def run(self, param):
+        from r2.lib.translation import Translator
+        if Translator.exists(param):
+            return Translator(locale = param)
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!
@@ -1489,7 +1531,7 @@ class VDestination(Validator):
 
             u = UrlParser(dest)
 
-            if u.is_reddit_url(c.site):
+            if u.is_sciteit_url(c.site):
                 return dest
 
         ip = getattr(request, "ip", "[unknown]")
@@ -1601,7 +1643,7 @@ class VFlairTemplateByID(VRequired):
 
     def run(self, flair_template_id):
         try:
-            return FlairTemplateBySubredditIndex.get_template(
+            return FlairTemplateBySubsciteitIndex.get_template(
                 c.site._id, flair_template_id)
         except tdb_cassandra.NotFound:
             return None

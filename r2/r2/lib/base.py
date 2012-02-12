@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -22,7 +22,6 @@
 
 from pylons import Response, c, g, request, session, config
 from pylons.controllers import WSGIController, Controller
-from pylons.controllers.util import abort
 from pylons.i18n import N_, _, ungettext, get_lang
 import r2.lib.helpers as h
 from r2.lib.utils import to_js
@@ -41,12 +40,6 @@ import sys
 import logging
 from r2.lib.utils import UrlParser, query_string
 logging.getLogger('scgi-wsgi').setLevel(logging.CRITICAL)
-
-
-def is_local_address(ip):
-    # TODO: support the /20 and /24 private networks? make this configurable?
-    return ip.startswith('10.')
-
 
 class BaseController(WSGIController):
     def try_pagecache(self):
@@ -71,7 +64,7 @@ class BaseController(WSGIController):
             and hashlib.md5(true_client_ip + g.ip_hash).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
-        elif g.trust_local_proxies and forwarded_for and is_local_address(remote_addr):
+        elif remote_addr in g.proxy_addr and forwarded_for:
             request.ip = forwarded_for.split(',')[-1]
         else:
             request.ip = environ['REMOTE_ADDR']
@@ -145,7 +138,7 @@ class BaseController(WSGIController):
         """
         u = UrlParser(url)
 
-        if u.is_reddit_url():
+        if u.is_sciteit_url():
             # make sure to pass the port along if not 80
             if not kw.has_key('port'):
                 kw['port'] = request.port
@@ -180,7 +173,7 @@ class BaseController(WSGIController):
 
         path = add_sr(cls.format_output_url(form_path) +
                       query_string(params))
-        abort(302, path)
+        return cls.redirect(path)
 
     @classmethod
     def redirect(cls, dest, code = 302):

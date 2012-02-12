@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -29,7 +29,6 @@ from pylons import c, g, request
 class Award (Thing):
     _defaults = dict(
         awardtype = 'regular',
-        api_ok = False
         )
 
     @classmethod
@@ -46,9 +45,11 @@ class Award (Thing):
         return [ d[id] for id in all ]
 
     @classmethod
-    def _new(cls, codename, title, awardtype, imgurl, api_ok):
+    def _new(cls, codename, title, awardtype, imgurl):
+#        print "Creating new award codename=%s title=%s imgurl=%s" % (
+#            codename, title, imgurl)
         a = Award(codename=codename, title=title, awardtype=awardtype,
-                  imgurl=imgurl, api_ok=api_ok)
+                  imgurl=imgurl)
         a._commit()
         Award._all_awards_cache(_update=True)
 
@@ -141,12 +142,8 @@ class Trophy(Relation(Account, Award)):
             recipient.set_cup(cup_info)
 
         t._commit()
-        t.update_caches()
-        return t
-    
-    def update_caches(self):
-        self.by_account(self._thing1, _update=True)
-        self.by_award(self._thing2, _update=True)
+        Trophy.by_account(recipient, _update=True)
+        Trophy.by_award(award, _update=True)
 
     @classmethod
     @memoize('trophy.by_account2')

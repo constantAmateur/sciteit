@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -80,7 +80,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      spam         = _("spam"),
                      autobanned   = _("autobanned"),
 
-                     # reddit header strings
+                     # sciteit header strings
                      adminon      = _("turn admin on"),
                      adminoff     = _("turn admin off"), 
                      prefs        = _("preferences"), 
@@ -89,7 +89,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      blog         = _("blog"),
                      logout       = _("logout"),
                      
-                     #reddit footer strings
+                     #sciteit footer strings
                      feedback     = _("contact us"),
                      socialite    = _("firefox extension"),
                      buttons      = _("buttons"),
@@ -98,8 +98,10 @@ menu =   MenuHandler(hot          = _('hot'),
                      mobile       = _("mobile"), 
                      store        = _("store"),  
                      ad_inq       = _("advertise"),
-                     gold         = _('reddit gold'),
-                     reddits      = _('subreddits'),
+                     gold         = _('sciteit gold'),
+                     sciteits      = _('subsciteits'),
+		     FAQ	  = _("FAQ"),
+		     aboutall	  = _("Why sciteit?"),
 
                      #preferences
                      options      = _('options'),
@@ -115,12 +117,15 @@ menu =   MenuHandler(hot          = _('hot'),
 
                      # comments
                      comments     = _("comments {toolbar}"),
+		     #Again we're having internationalization issues, so just drop the {toolbar}
+                     #criticisms   = _("criticisms"),
                      related      = _("related"),
                      details      = _("details"),
                      duplicates   = _("other discussions (%(num)s)"),
+                     shirt        = _("shirt"),
                      traffic      = _("traffic stats"),
 
-                     # reddits
+                     # sciteits
                      home         = _("home"),
                      about        = _("about"),
                      edit_subscriptions = _("edit subscriptions"),
@@ -131,11 +136,10 @@ menu =   MenuHandler(hot          = _('hot'),
                      banned       = _("ban users"),
                      banusers     = _("ban users"),
                      flair        = _("edit user flair"),
-                     log          = _("moderation log"),
 
                      popular      = _("popular"),
                      create       = _("create"),
-                     mine         = _("my reddits"),
+                     mine         = _("my sciteits"),
 
                      i18n         = _("help translate"),
                      errors       = _("errors"),
@@ -248,8 +252,7 @@ class NavButton(Styled):
                  target = "", style = "plain", **kw):
         # keep original dest to check against c.location when rendering
         aliases = set(_force_unicode(a.rstrip('/')) for a in aliases)
-        if dest:
-            aliases.add(_force_unicode(dest.rstrip('/')))
+        aliases.add(_force_unicode(dest.rstrip('/')))
 
         self.request_params = dict(request.GET)
         self.stripped_path = _force_unicode(request.path.rstrip('/').lower())
@@ -267,10 +270,7 @@ class NavButton(Styled):
         # of opt 
         if self.opt:
             p = self.request_params.copy()
-            if self.dest:
-                p[self.opt] = self.dest
-            elif self.opt in p:
-                del p[self.opt]
+            p[self.opt] = self.dest
         else:
             p = {}
             base_path = ("%s/%s/" % (base_path, self.dest)).replace('//', '/')
@@ -291,8 +291,6 @@ class NavButton(Styled):
     def is_selected(self):
         """Given the current request path, would the button be selected."""
         if self.opt:
-            if not self.dest and self.opt not in self.request_params:
-                return True
             return self.request_params.get(self.opt, '') in self.aliases
         else:
             if self.stripped_path == self.bare_path:
@@ -322,11 +320,14 @@ class OffsiteButton(NavButton):
     def cachable_attrs(self):
         return [('path', self.path), ('title', self.title)]
 
-class SubredditButton(NavButton):
-    def __init__(self, sr):
-        from r2.models.subreddit import Mod
-        self.path = sr.path
+class SubsciteitButton(NavButton):
+    def __init__(self, sr,special=None):
+        from r2.models.subsciteit import Mod
         name = 'mod' if sr == Mod else sr.name
+	name = 'root' if sr.name.lower() == g.default_sr.lower() else name
+        self.path = sr.path if name!='root' else '/'
+	name = special +' '+name+'' if special else name
+	
         NavButton.__init__(self, name, sr.path, False,
                            isselected = (c.site == sr))
 
@@ -374,7 +375,7 @@ class JsButton(NavButton):
 class PageNameNav(Styled):
     """generates the links and/or labels which live in the header
     between the header image and the first nav menu (e.g., the
-    subreddit name, the page name, etc.)"""
+    subsciteit name, the page name, etc.)"""
     pass
 
 class SimplePostMenu(NavMenu):
@@ -512,7 +513,7 @@ class ControversyTimeMenu(TimeMenu):
     default = 'day'
     use_post = True
 
-class SubredditMenu(NavMenu):
+class SubsciteitMenu(NavMenu):
     def find_selected(self):
         """Always return False so the title is always displayed"""
         return None

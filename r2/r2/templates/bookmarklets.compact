@@ -4,7 +4,7 @@
 
 <h2>Step 1: Bookmark this page</h2>
 
-<p>Press the "+" at the bottom of the screen and then click "save".  We've named the page "submit to reddit" so it should create a bookmark of the same name by default.</p>
+<p>Press the "+" at the bottom of the screen and then click "save".  We've named the page "submit to sciteit" so it should create a bookmark of the same name by default.</p>
 
 <img src="/static/bookmarklet/iphone_push_the_button.png" alt="push the plus"/>
 
@@ -35,7 +35,7 @@ javascript:location.href='http://${g.domain}/submit.compact?url='+encodeURICompo
 
 <h2>Step 3: Use the bookmarklet</h2>
 
-<p>When you are on a page that you'd like to submit to reddit, go to your bookmarks and click the "submit to reddit" bookmarklet</p>
+<p>When you are on a page that you'd like to submit to sciteit, go to your bookmarks and click the "submit to sciteit" bookmarklet</p>
 
 <img src="/static/bookmarklet/iphone_edit_the_button.png" alt="bookmark it"/>
 

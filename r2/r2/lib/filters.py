@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -24,6 +24,7 @@ import os
 import urllib
 import re
 import snudown
+import scihtmlatex
 from cStringIO import StringIO
 
 from xml.sax.handler import ContentHandler
@@ -88,9 +89,6 @@ def _force_unicode(text):
     if text == None:
         return u''
 
-    if isinstance(text, unicode):
-        return text
-
     try:
         text = unicode(text, 'utf-8')
     except UnicodeDecodeError:
@@ -148,7 +146,6 @@ valid_link_schemes = (
     'news://',
     'mumble://',
     'ssh://',
-    'git://',
 )
 
 class SouptestSaxHandler(ContentHandler):
@@ -177,11 +174,13 @@ markdown_ok_tags = {
     'table': ("align", ),
     'th': ("align", ),
     'td': ("align", ),
+    'img': ('src',),
+    'span': ('class')
     }
 markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
                          'pre', 'code', 'blockquote', 'center',
                          'tbody', 'thead', 'tr', 'sup', 'del',
-                         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
+                         'h1', 'h2', 'h3', 'h4', 'h5', 'h6')
 for bt in markdown_boring_tags:
     markdown_ok_tags[bt] = ()
 
@@ -195,7 +194,7 @@ def markdown_souptest(text, nofollow=False, target=None):
     if not text:
         return text
 
-    smd = safemarkdown(text, nofollow=nofollow, target=target)
+    smd = safemarkdown(text, nofollow, target)
 
     # Prepend a DTD reference so we can load up definitions of all the standard
     # XHTML entities (&nbsp;, etc.).
@@ -211,18 +210,42 @@ def markdown_souptest(text, nofollow=False, target=None):
 
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
-def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
+def safemarkdown(text, nofollow=False, target=None, wrap=True):
     if not text:
         return None
 
-    # this lets us skip the c.cname lookup (which is apparently quite
-    # slow) if target was explicitly passed to this function.
-    target = kwargs.get("target", None)
-    if "target" not in kwargs and c.cname:
+    if c.cname and not target:
         target = "_top"
 
+    #This should really be a library somewhere...
+    def dollarsToSpan(text):
+    	#Escaped dollars should be ignored, 
+	rstart=re.compile("""^\\$(.*?[^\\\\])\\$""")
+	ranywhere=re.compile("""([^\\\\])\\$(.*?[^\\\\])\\$""")
+	#Substitute them in turn...
+	text=rstart.sub("""<span class="eq">\\1</span>""",text)
+	text=ranywhere.sub("""\\1<span class="eq">\\2</span>""",text)
+	return text
+    #text=""" la de da da da, **I** take issue with this $\sum_0^{\inf}$"""
+    #The stuff to make the images goes here...
+    oldtext=text
+    try:
+    	text = dollarsToSpan(text)
+    	text = scihtmlatex.main(text)
+    except SyntaxError:
+    	text=oldtext
+    except:
+    	text=oldtext
+    	print "Something funny went wrong with scihtmlatex"
+    	
     text = snudown.markdown(_force_utf8(text), nofollow, target)
-
+    #If we've escaped any dollars characters, we should replace them here
+    text=re.sub("\\\\\\$","$",text)
+    #Find the valid images and unescape them.... Be very strict about this, don't let other images be rendered...
+    reg1=re.compile(r"""&lt;img src=&quot;&#47;static&#47;htmlatex&#47;([0-9,a-f])&#47;([0-9,a-f]{32})\.png&quot; &#47;&gt;""")
+    reg2=re.compile(r"""&lt;img src=&quot;/static/htmlatex/([0-9,a-f])/([0-9,a-f]{32})\.png&quot; /&gt;""")
+    text=reg1.sub("""<span class="eq"><img src="/static/htmlatex/\\1/\\2.png" /></span>""",text)
+    text=reg2.sub("""<span class="eq"><img src="/static/htmlatex/\\1/\\2.png" /></span>""",text)
     if wrap:
         return SC_OFF + MD_START + text + MD_END + SC_ON
     else:

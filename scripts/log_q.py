@@ -163,7 +163,7 @@ def run(streamfile=None, verbose=False):
                 news += "The log level was: %s\n" % d['level']
                 news += "The complete text was:\n"
                 news += repr(d['text'])
-                emailer.nerds_email (news, "reddit secretary")
+                emailer.nerds_email (news, "sciteit secretary")
 
         occ_key = "-".join(["logtext", daystring,
                             d['level'], d['classification']])

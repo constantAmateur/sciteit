@@ -28,7 +28,7 @@
     };
     $.unsafe_orig = $.unsafe;
     $.unsafe = function(text) {
-        /* inverts websafe filtering of reddit app. */
+        /* inverts websafe filtering of sciteit app. */
         text = $.unsafe_orig(text);
         if (typeof(text) == "string") {
             /* space compress the result */
@@ -164,7 +164,7 @@ function show_edit_usertext(form) {
 }
 
 function fetch_more() {
-    $("#siteTable").after($("<div class='loading'><img src='" + r.utils.staticURL('reddit_loading.png') + "'/></div>"));
+    $("#siteTable").after($("<div class='loading'><img src='" + r.utils.staticURL('sciteit_loading.png') + "'/></div>"));
 
 
     var o = document.location;

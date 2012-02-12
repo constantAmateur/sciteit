@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -27,7 +27,7 @@ from pylons import c, g, request
 from pylons.controllers.util import abort
 from pylons.i18n import _
 from r2.config.extensions import set_extension
-from reddit_base import RedditController, MinimalController, require_https
+from sciteit_base import SciteitController, MinimalController, require_https
 from r2.lib.db.thing import NotFound
 from r2.models import Account
 from r2.models.oauth2 import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
@@ -40,7 +40,7 @@ scope_info = {
     "identity": {
         "id": "identity",
         "name": _("My Identity"),
-        "description": _("Access my reddit username and signup date.")
+        "description": _("Access my sciteit username and signup date.")
     }
 }
 
@@ -59,9 +59,9 @@ class VClientID(VRequired):
         else:
             return self.error()
 
-class OAuth2FrontendController(RedditController):
+class OAuth2FrontendController(SciteitController):
     def pre(self):
-        RedditController.pre(self)
+        SciteitController.pre(self)
         require_https()
 
     def _check_redirect_uri(self, client, redirect_uri):
@@ -143,7 +143,7 @@ class OAuth2AccessController(MinimalController):
             require(client.secret == client_secret)
             return client
         except RequirementException:
-            abort(401, headers=[("WWW-Authenticate", 'Basic realm="reddit"')])
+            abort(401, headers=[("WWW-Authenticate", 'Basic realm="sciteit"')])
 
     @validate(grant_type = VOneOf("grant_type", ("authorization_code",)),
               code = VRequired("code", errors.NO_TEXT),
@@ -197,7 +197,7 @@ class OAuth2ResourceController(MinimalController):
                 self._auth_error(400, "invalid_request")
 
     def _auth_error(self, code, error):
-        abort(code, headers=[("WWW-Authenticate", 'Bearer realm="reddit", error="%s"' % error)])
+        abort(code, headers=[("WWW-Authenticate", 'Bearer realm="sciteit", error="%s"' % error)])
 
     def _get_bearer_token(self):
         auth = request.headers.get("Authorization")

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 """
-    Module for communication reddit-level communication with
+    Module for communication sciteit-level communication with
     Solr. Contains functions for indexing (`reindex_all`, `run_changed`)
     and searching (`search_things`). Uses pysolr (placed in r2.lib)
     for lower-level communication with Solr
@@ -43,6 +43,7 @@ from r2.lib.utils import timeago, UrlParser
 from r2.lib.utils import unicode_safe, tup, get_after, strordict_fullname
 from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp
+from random import random
 
 solr_cache_time = g.solr_cache_time
 
@@ -54,7 +55,7 @@ searchable_langs    = set(['dk','nl','en','fi','fr','de','it','no','nn','pt',
 ## Adding types is a matter of adding the class to indexed_types here,
 ## adding the fields from that type to search_fields below, and adding
 ## those fields to Solr's configuration
-indexed_types = (Subreddit, Link)
+indexed_types = (Subsciteit, Link)
 
 
 class Field(object):
@@ -115,7 +116,7 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                            Field('hot', lambda t: t._hot*1000, is_number=True, reverse=True),
                            Field('controversy', '_controversy', is_number=True, reverse=True),
                            Field('points', lambda t: (t._ups - t._downs), is_number=True, reverse=True)),
-               Subreddit: (Field('contents',
+               Subsciteit: (Field('contents',
                                  lambda s: ' '.join([unicode_safe(s.name),
                                                      unicode_safe(s.title),
                                                      unicode_safe(s.description),
@@ -134,8 +135,8 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                                  is_number=True, reverse=True),
                            Field('author_id'),
                            ThingField('author',Account,'author_id','name'),
-                           ThingField('subreddit',Subreddit,'sr_id','name'),
-                           #ThingField('reddit',Subreddit,'sr_id','name'),
+                           ThingField('subsciteit',Subsciteit,'sr_id','name'),
+                           #ThingField('sciteit',Subsciteit,'sr_id','name'),
                            Field('sr_id'),
                            Field('url', tokenize = True),
                            #Field('domain',
@@ -149,8 +150,8 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                                  # yes, it's a copy of 'hot'
                                  is_number=True, reverse=True),
                            ThingField('author',Account,'author_id','name'),
-                           ThingField('subreddit',Subreddit,'sr_id','name'))}
-                           #ThingField('reddit',Subreddit,'sr_id','name'))}
+                           ThingField('subsciteit',Subsciteit,'sr_id','name'))}
+                           #ThingField('sciteit',Subsciteit,'sr_id','name'))}
 
 def strip_control_characters(text):
     if not isinstance(text, basestring):
@@ -286,7 +287,7 @@ def fetch_batches(t_class,size,since,until):
         things = list(q)
 
 solr_queue=Queue()
-for i in range(20):
+for i in range(4):
     solr_queue.put(pysolr.Solr(g.solr_url))
 class SolrConnection(object):
     """
@@ -329,6 +330,7 @@ def indexer_worker(q,delete_all_first=False):
             if not (isinstance(t,list) and isinstance(t[0],dict)):
                 raise t
             count += len(t)
+	    print t
             s.add(t)
             if count > 25000:
                 print "Committing... (q:%d)" % (q.qsize(),)
@@ -397,9 +399,9 @@ def reindex_all(types = None, delete_all_first=False):
 def combine_searchterms(terms):
     """
         Convenience function to take a list like
-            [ sr_id:1, sr_id:2 sr_id:3 subreddit:reddit.com ]
+            [ sr_id:1, sr_id:2 sr_id:3 subsciteit:sciteit.com ]
         and turn it into
-            sr_id:(1 2 3) OR subreddit:reddit.com
+            sr_id:(1 2 3) OR subsciteit:sciteit.com
     """
     combined = {}
 
@@ -434,13 +436,13 @@ def swap_strings(s,this,that):
     return s.replace(this,'tmp').replace(that,this).replace('tmp',that)
 
 class SearchQuery(object):
-    def __init__(self, q, sort, fields = [], subreddits = [], authors = [], 
+    def __init__(self, q, sort, fields = [], subsciteits = [], authors = [], 
                  types = [], timerange = None, spam = False, deleted = False):
 
         self.q = q
         self.fields = fields
         self.sort = sort
-        self.subreddits = subreddits
+        self.subsciteits = subsciteits
         self.authors = authors
         self.types = types
         self.spam = spam
@@ -460,9 +462,9 @@ class SearchQuery(object):
     def __repr__(self):
         attrs = [ "***q=%s***" % self.q ]
 
-        if self.subreddits is not None:
+        if self.subsciteits is not None:
             attrs.append("srs=" + '+'.join([ "%d" % s
-                                             for s in self.subreddits ]))
+                                             for s in self.subsciteits ]))
 
         if self.authors is not None:
             attrs.append("authors=" + '+'.join([ "%d" % s
@@ -512,18 +514,18 @@ class SearchQuery(object):
             boost.append("+date:[%s TO %s]"
                          % (fromtime,totime))
 
-        if self.subreddits:
-            def subreddit_to_searchstr(sr):
-                if isinstance(sr,Subreddit):
-                    return ('sr_id','%d' % sr.id)
+        if self.subsciteits:
+            def subsciteit_to_searchstr(sr):
+                if isinstance(sr,Subsciteit):
+                    return ('sr_id','%d' % sr._id)
                 elif isinstance(sr,str) or isinstance(sr,unicode):
-                    return ('subreddit',sr)
+                    return ('subsciteit',sr)
                 else:
                     return ('sr_id','%d' % sr)
 
-            s_subreddits = map(subreddit_to_searchstr, tup(self.subreddits))
+            s_subsciteits = map(subsciteit_to_searchstr, tup(self.subsciteits))
 
-            boost.append("+(%s)" % combine_searchterms(s_subreddits))
+            boost.append("+(%s)" % combine_searchterms(s_subsciteits))
 
         if self.authors:
             def author_to_searchstr(a):
@@ -578,7 +580,6 @@ class SearchQuery(object):
                          + " start = %r, rows = %r,"
                          + " params = %r")
                         % (q,sort,start,rows,other_params))
-
             res = s.search(q, sort, start = start, rows = rows,
                            other_params = other_params)
 
@@ -619,7 +620,7 @@ class UserSearchQuery(SearchQuery):
 
 class LinkSearchQuery(UserSearchQuery):
     def __init__(self, q, mm = None, **kw):
-        additional_fields = ['site^1','author^1', 'subreddit^1', 'url^1']
+        additional_fields = ['site^1','author^1', 'subsciteit^1', 'url^1']
 
         if mm is None:
             mm = '4<75%'
@@ -638,11 +639,11 @@ class RelatedSearchQuery(LinkSearchQuery):
         search.docs = [ x for x in search.docs if x not in self.ignore ]
         return search
 
-class SubredditSearchQuery(UserSearchQuery):
+class SubsciteitSearchQuery(UserSearchQuery):
     def __init__(self, q, **kw):
-        # note that 'downs' is a measure of activity on subreddits
+        # note that 'downs' is a measure of activity on subsciteits
         UserSearchQuery.__init__(self, q, mm = '75%', sort = 'downs desc',
-                                 types=[Subreddit], **kw)
+                                 types=[Subsciteit], **kw)
 
 class DomainSearchQuery(SearchQuery):
     def __init__(self, domain, **kw):
@@ -679,11 +680,15 @@ def run_changed(drain=False):
 
         update_things = [x for x in things if not x._spam and not x._deleted]
         delete_things = [x for x in things if x._spam or x._deleted]
+	#How often should we commit?
+	commit=random()<.1
+	if commit:
+	    print "COMMITING!"
 
         with SolrConnection() as s:
             if update_things:
                 tokenized = tokenize_things(update_things)
-                s.add(tokenized)
+                s.add(tokenized,commit=commit)
             if delete_things:
                 for i in delete_things:
                     s.delete(id=i._fullname)

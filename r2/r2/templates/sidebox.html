@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -22,17 +22,17 @@
 
 <%namespace file="utils.html" import="plain_link"/>
 
-<div class="sidebox ${thing.css_class}${' disabled' if thing.disabled else ''}">
+<div class="sidebox ${thing.css_class}">
   <div class="morelink">
     ${plain_link(thing.title, thing.link, _sr_path=thing.sr_path,
-                 _class='login-required' if thing.show_cover else None, nocname=thing.nocname)}
+                 _class='login-required', nocname=thing.nocname)}
     <div class="nub"> </div>
   </div>
 
   %if thing.subtitles:
     <div class="spacer">
       ${plain_link('', thing.link, _sr_path=thing.sr_path,
-                   _class='login-required' if thing.show_cover else None, nocname=thing.nocname)}
+                   _class='login-required', nocname=thing.nocname)}
       %for subtitle in thing.subtitles:
         <div class="subtitle">${subtitle}</div>
       %endfor

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo MOO
+cd /home/solr/apache-solr-1.4.1/example/
+exec 2>&1
+exec setuidgid sciteit java -jar start.jar

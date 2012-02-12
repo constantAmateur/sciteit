@@ -6,7 +6,7 @@ storage failure in Cassandra
 """
 cat > mr_permacache <<HERE
 #!/bin/sh
-cd ~/reddit/r2
+cd ~/sciteit/r2
 paster run staging.ini ./mr_permacache.py -c "\$1"
 HERE
 chmod u+x mr_permacache
@@ -17,44 +17,44 @@ VOTEDBHOST=db03s1
 SAVEHIDEDBHOST=db01s1
 
 ## links
-time psql -F"\t" -A -t -d newreddit -U ri -h $LINKDBHOST \
+time psql -F"\t" -A -t -d newsciteit -U ri -h $LINKDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'link',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
-                   from reddit_thing_link t) to 'reddit_thing_link.dump'"
-time psql -F"\t" -A -t -d newreddit -U ri -h $LINKDBHOST \
+                   from sciteit_thing_link t) to 'sciteit_thing_link.dump'"
+time psql -F"\t" -A -t -d newsciteit -U ri -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
-                   from reddit_data_link d
-                  where d.key = 'author_id' or d.key = 'sr_id') to 'reddit_data_link.dump'"
-pv reddit_data_link.dump reddit_thing_link.dump | sort -T. -S200m | ./mr_permacache "join_links()" > links.joined
+                   from sciteit_data_link d
+                  where d.key = 'author_id' or d.key = 'sr_id') to 'sciteit_data_link.dump'"
+pv sciteit_data_link.dump sciteit_thing_link.dump | sort -T. -S200m | ./mr_permacache "join_links()" > links.joined
 pv links.joined | ./mr_permacache "link_listings()" | sort -T. -S200m > links.listings
 
 ## comments
-psql -F"\t" -A -t -d newreddit -U ri -h $COMMENTDBHOST \
+psql -F"\t" -A -t -d newsciteit -U ri -h $COMMENTDBHOST \
      -c "\\copy (select t.thing_id, 'thing', 'comment',
                         t.ups, t.downs, t.deleted, t.spam, extract(epoch from t.date)
-                   from reddit_thing_comment t) to 'reddit_thing_comment.dump'"
-psql -F"\t" -A -t -d newreddit -U ri -h $COMMENTDBHOST \
+                   from sciteit_thing_comment t) to 'sciteit_thing_comment.dump'"
+psql -F"\t" -A -t -d newsciteit -U ri -h $COMMENTDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'comment',
                         d.key, d.value
-                   from reddit_data_comment d
-                  where d.key = 'author_id') to 'reddit_data_comment.dump'"
-cat reddit_data_comment.dump reddit_thing_comment.dump | sort -T. -S200m | ./mr_permacache "join_comments()" > comments.joined
+                   from sciteit_data_comment d
+                  where d.key = 'author_id') to 'sciteit_data_comment.dump'"
+cat sciteit_data_comment.dump sciteit_thing_comment.dump | sort -T. -S200m | ./mr_permacache "join_comments()" > comments.joined
 cat links.joined | ./mr_permacache "comment_listings()" | sort -T. -S200m > comments.listings
 
 ## linkvotes
-psql -F"\t" -A -t -d newreddit -U ri -h $VOTEDBHOST \
+psql -F"\t" -A -t -d newsciteit -U ri -h $VOTEDBHOST \
      -c "\\copy (select r.rel_id, 'vote_account_link',
                         r.thing1_id, r.thing2_id, r.name, extract(epoch from r.date)
-                   from reddit_rel_vote_account_link r) to 'reddit_linkvote.dump'"
-pv reddit_linkvote.dump | ./mr_permacache "linkvote_listings()" | sort -T. -S200m > linkvotes.listings
+                   from sciteit_rel_vote_account_link r) to 'sciteit_linkvote.dump'"
+pv sciteit_linkvote.dump | ./mr_permacache "linkvote_listings()" | sort -T. -S200m > linkvotes.listings
 
 #savehide
-psql -F"\t" -A -t -d newreddit -U ri -h $SAVEHIDEDBHOST \
+psql -F"\t" -A -t -d newsciteit -U ri -h $SAVEHIDEDBHOST \
      -c "\\copy (select r.rel_id, 'savehide',
                         r.thing1_id, r.thing2_id, r.name, extract(epoch from r.date)
-                   from reddit_rel_savehide r) to 'reddit_savehide.dump'"
-pv reddit_savehide.dump | ./mr_permacache "savehide_listings()" | sort -T. -S200m > savehide.listings
+                   from sciteit_rel_savehide r) to 'sciteit_savehide.dump'"
+pv sciteit_savehide.dump | ./mr_permacache "savehide_listings()" | sort -T. -S200m > savehide.listings
 
 ## load them up
 # the individual .listings files are sorted so even if it's not sorted
@@ -157,7 +157,7 @@ def insert_to_query(q, items):
 def store_keys(key, maxes):
     # we're building queries from queries.py, but we could avoid this
     # by making the queries ourselves if we wanted to avoid the
-    # individual lookups for accounts and subreddits
+    # individual lookups for accounts and subsciteits
     userrel_fns = dict(liked = queries.get_liked,
                        disliked = queries.get_disliked,
                        saved = queries.get_saved,
@@ -179,7 +179,7 @@ def store_keys(key, maxes):
             # it
             sort = 'controversial'
 
-        q = queries.get_links(Subreddit._byID(sr_id), sort, time)
+        q = queries.get_links(Subsciteit._byID(sr_id), sort, time)
         insert_to_query(q, [tuple([item[-1]] + map(float, item[:-1]))
                             for item in maxes])
 

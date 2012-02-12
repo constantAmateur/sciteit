@@ -47,7 +47,7 @@ ul {
         color: #369;
         }
 
-.comment .md, .subreddit .md {
+.comment .md, .subsciteit .md {
     color: black;
 }
 
@@ -104,7 +104,7 @@ ul {
             border-left: thin solid #000;
             }
 
-.redditname {
+.sciteitname {
             font-weight: bold;
             margin: 0px 3px 0px 3px;
             }
@@ -129,7 +129,7 @@ ul {
         background-color: #CEE3F8;
         }
 
-#header .redditname a{
+#header .sciteitname a{
                      color: black;
                      }
 

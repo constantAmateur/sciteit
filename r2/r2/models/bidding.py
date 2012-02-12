@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,12 +20,13 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from sqlalchemy import Column, String, DateTime, Date, Float, Integer, Boolean,\
-     BigInteger, func as safunc, and_, or_
-from sqlalchemy.exc import IntegrityError
+     func as safunc, and_, or_
+from sqlalchemy.exceptions import IntegrityError
 from sqlalchemy.schema import PrimaryKeyConstraint
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.dialects.postgresql.base import PGInet as Inet
+from sqlalchemy.databases.postgres import PGBigInteger as BigInteger, \
+     PGInet as Inet
 from sqlalchemy.ext.declarative import declarative_base
 from pylons import g
 from r2.lib.utils import Enum
@@ -116,10 +117,7 @@ class Sessionized(object):
 
         """
         args = []
-        if filter_fn is None:
-            cols = cls.__table__.c
-        else:
-            cols = filter(filter_fn, cls.__table__.c)
+        cols = filter(filter_fn, cls.__table__.c)
         for k, v in zip(cols, a):
             if not kw.has_key(k.name):
                 args.append((k, cls._make_storable(v)))

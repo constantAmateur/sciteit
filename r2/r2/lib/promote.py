@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -48,9 +48,9 @@ CAMPAIGN = Enum("start", "end", "bid", "sr", "trans_id")
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
     try:
-        sr = Subreddit._by_name(name, stale=True)
+        sr = Subsciteit._by_name(name, stale=True)
     except NotFound:
-        sr = Subreddit._new(name = name,
+        sr = Subsciteit._new(name = name,
                             title = "promoted links",
                             # negative author_ids make this unlisable
                             author_id = -1,
@@ -61,11 +61,11 @@ def get_promote_srid(name = 'promos'):
 # attrs
 
 def promo_traffic_url(l):
-    domain = get_domain(cname = False, subreddit = False)
+    domain = get_domain(cname = False, subsciteit = False)
     return "http://%s/traffic/%s/" % (domain, l._id36)
 
 def promo_edit_url(l):
-    domain = get_domain(cname = False, subreddit = False)
+    domain = get_domain(cname = False, subsciteit = False)
     return "http://%s/promoted/edit_promo/%s" % (domain, l._id36)
 
 def pay_url(l, indx):
@@ -151,14 +151,14 @@ def get_all_links(author_id = None):
     return _sponsored_link_query(None, author_id = author_id)
 
 
-# subreddit roadblocking functions
+# subsciteit roadblocking functions
 
 roadblock_prefix = "promotion_roadblock"
 def roadblock_key(sr_name, d):
     return "%s-%s_%s" % (roadblock_prefix,
                          sr_name, d.strftime("%Y_%m_%d"))
 
-def roadblock_reddit(sr_name, start_date, end_date):
+def roadblock_sciteit(sr_name, start_date, end_date):
     d = start_date
     now = promo_datetime_now().date()
     # set the expire to be 1 week after the roadblock end date
@@ -170,7 +170,7 @@ def roadblock_reddit(sr_name, start_date, end_date):
                         time = expire)
         d += timedelta(1)
 
-def unroadblock_reddit(sr_name, start_date, end_date):
+def unroadblock_sciteit(sr_name, start_date, end_date):
     d = start_date
     while d < end_date:
         g.hardcache.delete(roadblock_key(sr_name, d))
@@ -301,7 +301,7 @@ def new_promotion(title, url, user, ip):
     Creates a new promotion with the provided title, etc, and sets it
     status to be 'unpaid'.
     """
-    sr = Subreddit._byID(get_promote_srid())
+    sr = Subsciteit._byID(get_promote_srid())
     l = Link._submit(title, url, user, sr, ip)
     l.promoted = True
     l.disable_comments = False
@@ -352,7 +352,7 @@ def new_campaign(link, dates, bid, sr):
         # create a new index
         indx = max(campaigns.keys() or [-1]) + 1
         # add the campaign
-        # store the name not the reddit
+        # store the name not the sciteit
         sr = sr.name if sr else ""
         campaigns[indx] = list(dates) + [bid, sr, 0]
         PromotionWeights.add(link, indx, sr, dates[0], dates[1], bid)
@@ -375,7 +375,7 @@ def edit_campaign(link, index, dates, bid, sr):
         if index in campaigns:
             trans_id = campaigns[index][CAMPAIGN.trans_id]
             prev_bid = campaigns[index][CAMPAIGN.bid]
-            # store the name not the reddit
+            # store the name not the sciteit
             sr = sr.name if sr else ""
             campaigns[index] = list(dates) + [bid, sr, trans_id]
             PromotionWeights.reschedule(link, index,
@@ -599,8 +599,8 @@ def get_traffic_weights(srnames):
             return max(float(sum(t)) / len(t), 1)
         return 1
 
-    default_traffic = [weigh(traffic.load_traffic("day", "reddit", sr.name))
-                             for sr in Subreddit.top_lang_srs('all', 10)]
+    default_traffic = [weigh(traffic.load_traffic("day", "sciteit", sr.name))
+                             for sr in Subsciteit.top_lang_srs('all', 10)]
     default_traffic = (float(max(sum(default_traffic),1)) /
                        max(len(default_traffic), 1))
 
@@ -608,7 +608,7 @@ def get_traffic_weights(srnames):
     for srname in srnames:
         if srname:
             res[srname] = (default_traffic /
-                          weigh(traffic.load_traffic("day", "reddit", srname)) )
+                          weigh(traffic.load_traffic("day", "sciteit", srname)) )
         else:
             res[srname] = 1
     return res
@@ -641,7 +641,7 @@ def make_daily_promotions(offset = 0, test = False):
     # over18 check
     for sr, links in weighted.iteritems():
         if sr:
-            sr = Subreddit._by_name(sr)
+            sr = Subsciteit._by_name(sr)
             if sr.over_18:
                 for l in Link._by_fullname([l[0] for l in links], return_dict = False):
                     l.over_18 = True
@@ -681,7 +681,7 @@ def make_daily_promotions(offset = 0, test = False):
     srs = {"":""}
     for srname in weighted.keys():
         if srname:
-            srs[srname] = Subreddit._by_name(srname)._id
+            srs[srname] = Subsciteit._by_name(srname)._id
     weighted = dict((srs[k], v) for k, v in weighted.iteritems())
 
     if not test:
@@ -692,16 +692,16 @@ def make_daily_promotions(offset = 0, test = False):
 
 def get_promotion_list(user, site):
     # site is specified, pick an ad from that site
-    if not isinstance(site, FakeSubreddit):
+    if not isinstance(site, FakeSubsciteit):
         srids = set([site._id])
-    elif isinstance(site, MultiReddit):
+    elif isinstance(site, MultiSciteit):
         srids = set(site.sr_ids)
     # site is Fake, user is not.  Pick based on their subscriptions.
     elif user and not isinstance(user, FakeAccount):
-        srids = set(Subreddit.reverse_subscriber_ids(user) + [""])
+        srids = set(Subsciteit.reverse_subscriber_ids(user) + [""])
     # both site and user are "fake" -- get the default subscription list
     else:
-        srids = set(Subreddit.user_subreddits(None, True) + [""])
+        srids = set(Subsciteit.user_subsciteits(None, True) + [""])
 
     return get_promotions_cached(srids)
 

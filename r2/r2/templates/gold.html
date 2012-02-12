@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -81,7 +81,7 @@
 
 <div class="gold-form">
   <h1 class="goldgift">
-    ${_("reddit gold")} (<a href="/help/gold">help</a>)
+    ${_("sciteit gold")} (<a href="/help/gold">help</a>)
   </h1>
 
   <form class="content">
@@ -90,11 +90,11 @@
       "", thing.goldtype == "autorenew")}<br/>
     ${radio_type("goldtype", "onetime", _("Buy for yourself, as a one-time purchase"),
       "", thing.goldtype == "onetime")}<br/>
-    ${radio_type("goldtype", "gift", _("Give reddit gold to someone else"),
+    ${radio_type("goldtype", "gift", _("Give sciteit gold to someone else"),
       "", thing.goldtype == "gift")}<br/>
-    ${radio_type("goldtype", "creddits", _('Buy reddit gold "creddits"'),
-      unsafe("<a href='/help/creddits'>details</a>"),
-      thing.goldtype == "creddits")}<br/>
+    ${radio_type("goldtype", "csciteits", _('Buy sciteit gold "csciteits"'),
+      unsafe("<a href='/help/csciteits'>details</a>"),
+      thing.goldtype == "csciteits")}<br/>
     </%utils:round_field>
   </form>
 
@@ -118,9 +118,9 @@
 
   <%self:goldsec goldtype="gift">
     <%utils:round_field title="${_('How much gold do you wish to bestow?')}">
-      %if thing.user_creddits:
+      %if thing.user_csciteits:
         <select name="months" class="gold-dropdown">
-          %for i in range(1, thing.user_creddits + 1):
+          %for i in range(1, thing.user_csciteits + 1):
              <option value="${i}">
                ${unsafe(Score.somethings(i, "month"))}
              </option>
@@ -128,7 +128,7 @@
         </select>
         <br/>
         <span class="note">
-          ${_("Note: If you want to give more than %(number)d, you'll need to buy more creddits.") % dict(number=thing.user_creddits)}
+          ${_("Note: If you want to give more than %(number)d, you'll need to buy more csciteits.") % dict(number=thing.user_csciteits)}
         </span>
       %else:
         ${gold_dropdown("months")}
@@ -169,9 +169,9 @@
     </%utils:round_field>
   </%self:goldsec>
 
-  <%self:goldsec goldtype="creddits">
-    <%utils:round_field title="${_('How many creddits would you like to buy? (each will allow you to give one month of reddit gold)')}">
-      ${gold_dropdown("creddits")}
+  <%self:goldsec goldtype="csciteits">
+    <%utils:round_field title="${_('How many csciteits would you like to buy? (each will allow you to give one month of sciteit gold)')}">
+      ${gold_dropdown("csciteits")}
       <button type="submit" class="btn gold-button">${_("buy")}</button>
       <span class="status"></span>
     </%utils:round_field>

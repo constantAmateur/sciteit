@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -42,7 +42,7 @@ class RunCommand(command.Command):
 
     usage = "CONFIGFILE CMDFILE.py"
     summary = "Executed CMDFILE with pylons support"
-    group_name = "Reddit"
+    group_name = "Sciteit"
 
 
     parser = command.Command.standard_parser(verbose=True)
@@ -100,7 +100,12 @@ class RunCommand(command.Command):
         loaded_namespace = {}
 
         if self.args[1:]:
-            execfile(self.args[1], loaded_namespace)
-
+            cmd = self.args[1]
+            f = open(cmd);
+            data = f.read()
+            f.close()
+            
+            exec data in loaded_namespace
+            
         if self.options.command:
             exec self.options.command in loaded_namespace

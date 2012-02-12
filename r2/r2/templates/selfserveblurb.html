@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -28,9 +28,11 @@ from r2.lib.template_helpers import static
 <script src="${static('selfserve_ads/script.js', allow_gzip=False)}" type="text/javascript"></script>
 
 <div class="self-service instructions">
+    <!-- 	Header with control buttons. -->
+    <h1 class="sciteitad-header">sciteit advertising
+    </h1>
     <!-- 	Outer column container, for CSS control (If the need arises) -->
     <div class="column-container">
-        <h1 class="redditad-header">reddit advertising</h1>
         <div class="left-col column">
             <div class="col-trigger">
                 <img src="${static('selfserve_ads/col1.png')}" width="220px" height="128px" alt="" class="image"/>
@@ -60,7 +62,7 @@ from r2.lib.template_helpers import static
 
                 <h2>Interact with customers</h2>
                 <ul>
-                    <li>reddit ads have comments, view what people think in real-time</li>
+                    <li>sciteit ads have comments, view what people think in real-time</li>
                     <li>Up and Down vote system, see how much people enjoy your link, in one metric</li>
                 </ul>
             </div>
@@ -84,10 +86,10 @@ from r2.lib.template_helpers import static
                 <a href="/promoted" class="manage-ads">manage existing ads</a>
             </div>
             <div class="bottom-box-title">Start advertising today!</div>
-            <p><a href="/selfserviceoatmeal">A comic that explains it all.</a><br/>
-                Have questions? Read the&#32;<a href="/help/selfserve">FAQ</a>, or send us an&#32; <a href="mailto:marketing@reddit.com?subject=Questions about reddit advertising">email</a>.
+            <p><a href="/selfserviceoatmeal">A comic that explains it all</a><br/>
+                Have questions? Read the&#32;<a href="/help/selfserve">FAQ</a>, or Send us an&#32; <a href="mailto:marketing(at)sciteit.com?subject=Questions about sciteit advertising&body=Don't forget to change the (at) in the url!">email</a>
             <br/>
-            Interested in a bigger campaign?&#32;<a href="mailto:marketing@reddit.com?subject=campaign%20inquiry">Talk to our sales team</a>.
+            Interested in a bigger campaign?&#32;<a href="mailto:marketing@sciteit.com?subject=campaign%20inquiry">Talk to our sales team</a>.
             </p>
             <div style="clear:both;"></div>
         </div>
@@ -97,13 +99,13 @@ from r2.lib.template_helpers import static
             ##Javascript takes care of everything else
             ##Try and keep each the same length, if at all possible, otherwise it looks odd on smaller ones
             <div id="testimonial-holder">
-                <div class="testimonial"><q>My reddit ad (above) has yielded the highest ROI (by far) compared to the
+                <div class="testimonial"><q>My sciteit ad (above) has yielded the highest ROI (by far) compared to the
                     other ad platforms&hellip;</q>
                     <cite>-<a
-                            href="http://www.gabrielweinberg.com/blog/2010/03/my-duck-duck-go-reddit-ad-by-the-numbers.html"
+                            href="http://www.gabrielweinberg.com/blog/2010/03/my-duck-duck-go-sciteit-ad-by-the-numbers.html"
                             target="blank" rel="nofollow">Gabriel Weinberg</a></cite>
                 </div>
-                <div class="testimonial"><q>Reddit is without a doubt the web's hottest social news
+                <div class="testimonial"><q>Sciteit is without a doubt the web's hottest social news
                     community...Advertising here is reaching one of the web's most influential communities.</q>
                     <cite>-<a
                             href="http://www.b2cmarketinginsider.com/online-marketing/7-paid-promotional-tactics-you-should-test-016208"

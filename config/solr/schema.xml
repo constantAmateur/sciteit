@@ -3,7 +3,7 @@
 "The contents of this file are subject to the Common Public Attribution
 License Version 1.0. (the "License"); you may not use this file except in
 compliance with the License. You may obtain a copy of the License at
-http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 License Version 1.1, but Sections 14 and 15 have been added to cover use of
 software over a computer network and provide for limited attribution for the
 Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -13,7 +13,7 @@ Software distributed under the License is distributed on an "AS IS" basis,
 WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 the specific language governing rights and limitations under the License.
 
-The Original Code is Reddit.
+The Original Code is Sciteit.
 
 The Original Developer is the Initial Developer.  The Initial Developer of
 the Original Code is CondeNet, Inc.
@@ -22,7 +22,7 @@ All portions of the code written by CondeNet are Copyright (c) 2006-2009
 CondeNet, Inc. All Rights Reserved.
 -->
 
-<schema name="reddit" version="1.1">
+<schema name="sciteit" version="1.1">
   <types>
     <!-- field type definitions. The "name" attribute is
        just a label to be used by field definitions.  The "class"
@@ -387,10 +387,10 @@ CondeNet, Inc. All Rights Reserved.
    <field name="points"      type="sint"    indexed="true" stored="true"  required="true" reversed="true" />
    <field name="spam"        type="boolean" indexed="true" stored="true"  required="false" />
    <field name="deleted"     type="boolean" indexed="true" stored="true"  required="false" />
-   <!-- subreddit,link,comment -->
+   <!-- subsciteit,link,comment -->
    <field name="author_id"   type="integer" indexed="true" stored="false" required="false" />
    <field name="author"      type="string"  indexed="true" stored="false" required="false" />
-   <!-- subreddit -->
+   <!-- subsciteit -->
    <field name="title"       type="text"    indexed="true" stored="false" required="false" />
    <field name="description" type="text"    indexed="true" stored="false" required="false" />
    <field name="firsttext"   type="text"    indexed="true" stored="false" required="false" />
@@ -399,8 +399,8 @@ CondeNet, Inc. All Rights Reserved.
    <field name="sr_type"     type="string"  indexed="true" stored="false" required="false" />
    <!-- link -->
    <field name="sr_id"       type="integer" indexed="true" stored="false" required="false" />
-   <field name="reddit"      type="string"  indexed="true" stored="false" required="false" />
-   <field name="subreddit"   type="string"  indexed="true" stored="false" required="false" />
+   <field name="sciteit"      type="string"  indexed="true" stored="false" required="false" />
+   <field name="subsciteit"   type="string"  indexed="true" stored="false" required="false" />
    <field name="url"         type="text"    indexed="true" stored="false" required="false" />
    <field name="domain"      type="string"  indexed="true" stored="false" required="false" multiValued="true" />
    <field name="site"        type="string"  indexed="true" stored="false" required="false" multiValued="true" />

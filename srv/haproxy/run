@@ -2,6 +2,6 @@
 
 ulimit -n 32768
 
-cd ~reddit
+cd ~sciteit
 exec 2>&1
-exec /usr/sbin/haproxy -f /home/reddit/srv/haproxy/haproxy.conf
+exec /usr/sbin/haproxy -f /home/sciteit/sciteit/srv/haproxy/haproxy.conf

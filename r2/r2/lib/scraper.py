@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -759,9 +759,9 @@ class EmbedlyOEmbed(OEmbed):
         'picasaweb.google.com', 'picplz.com', 'pikchur.com', 'ping.fm',
         'polldaddy.com', 'polleverywhere.com', 'posterous.com', 'prezi.com',
         'qik.com', 'quantcast.com', 'questionablecontent.net', 'qwantz.com',
-        'qwiki.com', 'radionomy.com', 'radioreddit.com', 'rdio.com',
-        'recordsetter.com','redux.com', 'revision3.com', 'revver.com',
-        'saynow.com', 'schooltube.com', 'sciencestage.com', 'scrapblog.com',
+        'qwiki.com', 'radionomy.com', 'radiosciteit.com', 'rdio.com',
+        'redux.com', 'revision3.com', 'revver.com', 'saynow.com',
+        'schooltube.com', 'sciencestage.com', 'scrapblog.com',
         'screencast.com', 'screenr.com', 'scribd.com', 'sendables.jibjab.com',
         'share.ovi.com', 'shitmydadsays.com', 'shopstyle.com', 'skitch.com',
         'slideshare.net', 'smugmug.com', 'snotr.com', 'socialcam.com',
@@ -779,8 +779,7 @@ class EmbedlyOEmbed(OEmbed):
         'vodcars.com', 'washingtonpost.com', 'whitehouse.gov', 'whosay.com',
         'wikimedia.org', 'wikipedia.org', 'wistia.com', 'wordpress.tv',
         'worldstarhiphop.com', 'xiami.com', 'xkcd.com', 'xtranormal.com',
-        'yfrog.com', 'youku.com', 'youtu.be', 'youtube.com', 'zapiks.com',
-        'zero-inch.com']
+        'yfrog.com', 'youku.com', 'youtube.com', 'zapiks.com', 'zero-inch.com']
 
     url_re = re.compile(
         'http:\\/\\/.*youtube\\.com\\/watch.*|' +
@@ -1269,10 +1268,10 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/www\\.saynow\\.com\\/playMsg\\.html.*|' +
         'http:\\/\\/www\\.saynow\\.com\\/playMsg\\.html.*|' +
         'http:\\/\\/grooveshark\\.com\\/.*|' +
-        'http:\\/\\/radioreddit\\.com\\/songs.*|' +
-        'http:\\/\\/www\\.radioreddit\\.com\\/songs.*|' +
-        'http:\\/\\/radioreddit\\.com\\/\\?q=songs.*|' +
-        'http:\\/\\/www\\.radioreddit\\.com\\/\\?q=songs.*|' +
+        'http:\\/\\/radiosciteit\\.com\\/songs.*|' +
+        'http:\\/\\/www\\.radiosciteit\\.com\\/songs.*|' +
+        'http:\\/\\/radiosciteit\\.com\\/\\?q=songs.*|' +
+        'http:\\/\\/www\\.radiosciteit\\.com\\/\\?q=songs.*|' +
         'http:\\/\\/www\\.gogoyoko\\.com\\/song\\/.*|' +
         'http:\\/\\/espn\\.go\\.com\\/video\\/clip.*|' +
         'http:\\/\\/espn\\.go\\.com\\/.*\\/story.*|' +
@@ -1321,8 +1320,7 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/planetgreen\\.discovery\\.com\\/videos\\/.*|' +
         'http:\\/\\/science\\.discovery\\.com\\/videos\\/.*|' +
         'http:\\/\\/tlc\\.discovery\\.com\\/videos\\/.*|' +
-        'http:\\/\\/video\\.forbes\\.com\\/fvn\\/.*|' + 
-        'http:\\/\\/recordsetter\\.com\\/*\\/*\\/*'
+        'http:\\/\\/video\\.forbes\\.com\\/fvn\\/.*|'
         , re.I
     )
     
@@ -1762,10 +1760,10 @@ test_urls = [
     ]
 
 def submit_all():
-    from r2.models import Subreddit, Account, Link, NotFound
+    from r2.models import Subsciteit, Account, Link, NotFound
     from r2.lib.media import set_media
     from r2.lib.db import queries
-    sr = Subreddit._by_name('testmedia')
+    sr = Subsciteit._by_name('testmedia')
     author = Account._by_name('testmedia')
     links = []
     for url in test_urls:

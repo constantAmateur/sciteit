@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -38,7 +38,7 @@ from pylons import g
 amqp_host = g.amqp_host
 amqp_user = g.amqp_user
 amqp_pass = g.amqp_pass
-amqp_exchange = 'reddit_exchange'
+amqp_exchange = 'sciteit_exchange'
 log = g.log
 amqp_virtual_host = g.amqp_virtual_host
 amqp_logging = g.amqp_logging
@@ -128,11 +128,11 @@ class ConnectionManager(local):
         return self.channel
 
     def init_queue(self):
-        from r2.lib.queues import RedditQueueMap
+        from r2.lib.queues import SciteitQueueMap
 
         chan = self.get_channel()
 
-        RedditQueueMap(amqp_exchange, chan).init()
+        SciteitQueueMap(amqp_exchange, chan).init()
 
 connection_manager = ConnectionManager()
 
@@ -343,9 +343,9 @@ def dedup_queue(queue, rk = None, limit=None,
 
 
 def _test_setup(test_q = 'test_q'):
-    from r2.lib.queues import RedditQueueMap
+    from r2.lib.queues import SciteitQueueMap
     chan = connection_manager.get_channel()
-    rqm = RedditQueueMap(amqp_exchange, chan)
+    rqm = SciteitQueueMap(amqp_exchange, chan)
     rqm._q(test_q, durable=False, auto_delete=True, self_refer=True)
     return chan
 

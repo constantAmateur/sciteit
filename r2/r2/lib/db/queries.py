@@ -1,5 +1,5 @@
 from r2.models import Account, Link, Comment, Trial, Vote, SaveHide
-from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox
+from r2.models import Message, Inbox, Subsciteit, ModContribSR, ModeratorInbox
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
@@ -114,7 +114,7 @@ class CachedResults(object):
          # eligibility in the list is determined only by its sort
          # value (e.g. hot) and where addition/removal from the list
          # incurs an insertion/deletion event called on the query. So
-         # the top hottest items in X some subreddit where the query
+         # the top hottest items in X some subsciteit where the query
          # is notified on every submission/banning/unbanning/deleting
          # will work, but for queries with a time-component or some
          # other eligibility factor, it cannot be inserted this way.
@@ -134,6 +134,7 @@ class CachedResults(object):
 
     def _mutate(self, fn, willread=True):
         self.data = query_cache.mutate(self.iden, fn, default=[], willread=willread)
+	print "Inserting the hash |%s|" % self.iden
         self._fetched=True
 
     def insert(self, items):
@@ -191,6 +192,7 @@ class CachedResults(object):
            only run by hand."""
         self.data = [self.make_item_tuple(i) for i in self.query]
         self._fetched = True
+	print "Updating the hash |%s|" % self.iden
         query_cache.set(self.iden, self.data)
 
     def __repr__(self):
@@ -266,11 +268,18 @@ def merge_results(*results):
         m.prewrap_fn = results[0].prewrap_fn
         return m
 
-def get_links(sr, sort, time):
-    return _get_links(sr._id, sort, time)
+def get_links(sr, sort, time,no_children=False):
+    return _get_links(sr._id, sort, time,no_children=no_children)
 
-def _get_links(sr_id, sort, time):
-    """General link query for a subreddit."""
+def _get_links(sr_id, sort, time,no_children=False):
+    """General link query for a subsciteit."""
+    #Get the children if there are any...
+    from r2.lib.normalized_hot import expand_children
+    #Are we building a lot of them?
+    if not no_children:
+        srs = expand_children(sr_id,byID=True)
+	results = [_get_links(sr_id,sort,time,no_children=True) for sr_id in srs]
+	return merge_results(*results)
     q = Link._query(Link.c.sr_id == sr_id,
                     sort = db_sort(sort),
                     data = True)
@@ -296,7 +305,7 @@ def get_spam_comments(sr):
 
 def get_spam(sr):
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subsciteit._byID(sr.sr_ids(), return_dict=False)
         results = [ get_spam_links(sr) for sr in srs ]
         return merge_results(*results)
     else:
@@ -319,7 +328,7 @@ def get_reported_comments(sr):
 
 def get_reported(sr):
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subsciteit._byID(sr.sr_ids(), return_dict=False)
         results = []
         results.extend(get_reported_links(sr) for sr in srs)
         results.extend(get_reported_comments(sr) for sr in srs)
@@ -371,7 +380,7 @@ def get_trials_links(sr):
 
 def get_trials(sr):
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subsciteit._byID(sr.sr_ids(), return_dict=False)
         return get_trials_links(srs)
     else:
         return get_trials_links(sr)
@@ -379,7 +388,7 @@ def get_trials(sr):
 def get_modqueue(sr):
     results = []
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subsciteit._byID(sr.sr_ids(), return_dict=False)
         results.append(get_trials_links(srs))
 
         for sr in srs:
@@ -427,16 +436,24 @@ def get_sr_comments(sr):
     return _get_sr_comments(sr._id)
 
 def _get_sr_comments(sr_id):
-    """the subreddit /r/foo/comments page"""
+    """the subsciteit /r/foo/comments page"""
     q = Comment._query(Comment.c.sr_id == sr_id,
                        sort = desc('_date'))
     return make_results(q)
 
 def _get_comments(user_id, sort, time):
+    #q= Comment._query(Comment.c.author_id == user_id, Comment.c._spam == (True,False), Comment.c.criticism==False,sort = db_sort(sort))
     return user_query(Comment, user_id, sort, time)
 
 def get_comments(user, sort, time):
     return _get_comments(user._id, sort, time)
+    
+def _get_criticisms(user_id, sort, time):
+    q = Comment._query(Comment.c.author_id == user_id, Comment.c.criticism==True, sort = db_sort(sort),data=True)
+    return make_results(q)
+
+def get_criticisms(user, sort, time):
+    return _get_criticisms(user._id, sort, time)
 
 def _get_submitted(user_id, sort, time):
     return user_query(Link, user_id, sort, time)
@@ -477,10 +494,10 @@ def get_hidden(user):
 def get_saved(user):
     return user_rel_query(SaveHide, user, 'save')
 
-def get_subreddit_messages(sr):
+def get_subsciteit_messages(sr):
     return user_rel_query(ModeratorInbox, sr, 'inbox')
 
-def get_unread_subreddit_messages(sr):
+def get_unread_subsciteit_messages(sr):
     return user_rel_query(ModeratorInbox, sr, 'inbox',
                           filters = [ModeratorInbox.c.new == True])
 
@@ -547,7 +564,7 @@ def add_queries(queries, insert_items=None, delete_items=None, foreground=False)
             raise Exception("Cannot update query %r!" % (q,))
 
 #can be rewritten to be more efficient
-def all_queries(fn, obj, *param_lists):
+def all_queries(fn, obj, *param_lists,**kw):
     """Given a fn and a first argument 'obj', calls the fn(obj, *params)
     for every permutation of the parameters in param_lists"""
     results = []
@@ -561,17 +578,17 @@ def all_queries(fn, obj, *param_lists):
                 new_params.append(new_param)
         params = new_params
 
-    results = [fn(*p) for p in params]
+    results = [fn(*p,**kw) for p in params]
     return results
 
 ## The following functions should be called after their respective
 ## actions to update the correct listings.
 def new_link(link):
     "Called on the submission and deletion of links"
-    sr = Subreddit._byID(link.sr_id)
+    sr = Subsciteit._byID(link.sr_id)
     author = Account._byID(link.author_id)
 
-    results = [get_links(sr, 'new', 'all')]
+    results = [get_links(sr, 'new', 'all',no_children=True)]
     # we don't have to do hot/top/controversy because new_vote will do
     # that
 
@@ -593,7 +610,7 @@ def new_comment(comment, inbox_rels):
            get_comments(author, 'top', 'all'),
            get_comments(author, 'controversial', 'all')]
 
-    sr = Subreddit._byID(comment.sr_id)
+    sr = Subsciteit._byID(comment.sr_id)
 
     if comment._deleted:
         job_key = "delete_items"
@@ -634,20 +651,23 @@ def new_comment(comment, inbox_rels):
                 set_unread(comment, inbox_owner, True)
 
 
-def new_subreddit(sr):
+def new_subsciteit(sr):
     "no precomputed queries here yet"
-    amqp.add_item('new_subreddit', sr._fullname)
+    amqp.add_item('new_subsciteit', sr._fullname)
 
 
 def new_vote(vote, foreground=False):
     user = vote._thing1
     item = vote._thing2
+    f=open("/home/sciteit/vote.log",'w')
+    f.write(str(vote))
+    f.close()
 
     if not isinstance(item, (Link, Comment)):
         return
 
     if vote.valid_thing and not item._spam and not item._deleted:
-        sr = item.subreddit_slow
+        sr = item.subsciteit_slow
         results = []
 
         author = Account._byID(item.author_id)
@@ -661,9 +681,9 @@ def new_vote(vote, foreground=False):
             # don't do 'new', because that was done by new_link, and
             # the time-filtered versions of top/controversial will be
             # done by mr_top
-            results.extend([get_links(sr, 'hot', 'all'),
-                            get_links(sr, 'top', 'all'),
-                            get_links(sr, 'controversial', 'all'),
+            results.extend([get_links(sr, 'hot', 'all',no_children=True),
+                            get_links(sr, 'top', 'all',no_children=True),
+                            get_links(sr, 'controversial', 'all',no_children=True),
                             ])
 
             for domain in utils.UrlParser(item.url).domain_permutations():
@@ -695,7 +715,7 @@ def new_message(message, inbox_rels):
         to = inbox_rel._thing1
         # moderator message
         if isinstance(inbox_rel, ModeratorInbox):
-            add_queries([get_subreddit_messages(to)],
+            add_queries([get_subsciteit_messages(to)],
                         insert_items = inbox_rel)
         # personal message
         else:
@@ -707,10 +727,10 @@ def new_message(message, inbox_rels):
     add_message(message)
 
 def set_unread(message, to, unread):
-    if isinstance(to, Subreddit):
+    if isinstance(to, Subsciteit):
         for i in ModeratorInbox.set_unread(message, unread):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
-            add_queries([get_unread_subreddit_messages(i._thing1)], **kw)
+            add_queries([get_unread_subsciteit_messages(i._thing1)], **kw)
     else:
         for i in Inbox.set_unread(message, unread, to = to):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
@@ -749,7 +769,7 @@ def changed(things, boost_only=False):
 
 def _by_srid(things,srs=True):
     """Takes a list of things and returns them in a dict separated by
-       sr_id, in addition to the looked-up subreddits"""
+       sr_id, in addition to the looked-up subsciteits"""
     ret = {}
 
     for thing in tup(things):
@@ -757,7 +777,7 @@ def _by_srid(things,srs=True):
             ret.setdefault(thing.sr_id, []).append(thing)
 
     if srs:
-        _srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
+        _srs = Subsciteit._byID(ret.keys(), return_dict=True) if ret else {}
         return ret, _srs
     else:
         return ret
@@ -782,13 +802,13 @@ def del_or_ban(things, why):
             if why == "ban":
                 add_queries([get_spam_links(sr)], insert_items = links)
             # rip it out of the listings. bam!
-            results = [get_links(sr, 'hot', 'all'),
-                       get_links(sr, 'new', 'all'),
+            results = [get_links(sr, 'hot', 'all',no_children=True),
+                       get_links(sr, 'new', 'all',no_children=True),
                        ]
 
             for sort in time_filtered_sorts:
                 for time in db_times.keys():
-                    results.append(get_links(sr, sort, time))
+                    results.append(get_links(sr, sort, time,no_children=True))
 
             add_queries(results, delete_items = links)
 
@@ -812,10 +832,10 @@ def unban(things):
         if links:
             add_queries([get_spam_links(sr)], delete_items = links)
             # put it back in the listings
-            results = [get_links(sr, 'hot', 'all'),
-                       get_links(sr, 'new', 'all'),
-                       get_links(sr, 'top', 'all'),
-                       get_links(sr, 'controversial', 'all'),
+            results = [get_links(sr, 'hot', 'all',no_children=True),
+                       get_links(sr, 'new', 'all',no_children=True),
+                       get_links(sr, 'top', 'all',no_children=True),
+                       get_links(sr, 'controversial', 'all',no_children=True),
                        ]
 
             # the time-filtered listings will have to wait for the
@@ -832,10 +852,10 @@ def unban(things):
 
 def new_report(thing):
     if isinstance(thing, Link):
-        sr = Subreddit._byID(thing.sr_id)
+        sr = Subsciteit._byID(thing.sr_id)
         add_queries([get_reported_links(sr)], insert_items = thing)
     elif isinstance(thing, Comment):
-        sr = Subreddit._byID(thing.sr_id)
+        sr = Subsciteit._byID(thing.sr_id)
         add_queries([get_reported_comments(sr)], insert_items = thing)
 
 def clear_reports(things):
@@ -856,7 +876,7 @@ def clear_reports(things):
 
 def add_all_ban_report_srs():
     """Adds the initial spam/reported pages to the report queue"""
-    q = Subreddit._query(sort = asc('_date'))
+    q = Subsciteit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
         add_queries([get_spam_links(sr),
                      get_spam_comments(sr),
@@ -865,13 +885,13 @@ def add_all_ban_report_srs():
                      ])
         
 def add_all_srs():
-    """Recalculates every listing query for every subreddit. Very,
+    """Recalculates every listing query for every subsciteit. Very,
        very slow."""
-    q = Subreddit._query(sort = asc('_date'))
+    q = Subsciteit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
-        for q in all_queries(get_links, sr, ('hot', 'new'), ['all']):
+        for q in all_queries(get_links, sr, ('hot', 'new'), ['all'],no_children=True):
             q.update()
-        for q in all_queries(get_links, sr, time_filtered_sorts, db_times.keys()):
+        for q in all_queries(get_links, sr, time_filtered_sorts, db_times.keys(),no_children=True):
             q.update()
         get_spam_links(sr).update()
         get_spam_comments(sr).update()
@@ -1055,20 +1075,19 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
 
 def process_votes_single(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
-
     @g.stats.amqp_processor(qname)
     def _handle_vote(msg):
         #assert(len(msgs) == 1)
-        r = pickle.loads(msg.body)
-
+	r = pickle.loads(msg.body)
         uid, tid, dir, ip, organic, cheater = r
+
         voter = Account._byID(uid, data=True)
         votee = Thing._by_fullname(tid, data = True)
         if isinstance(votee, Comment):
             update_comment_votes([votee])
 
         # I don't know how, but somebody is sneaking in votes
-        # for subreddits
+        # for subsciteits
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
@@ -1094,7 +1113,7 @@ def process_votes_multi(qname, limit=100):
 
             if not isinstance(votee, (Link, Comment)):
                 # I don't know how, but somebody is sneaking in votes
-                # for subreddits
+                # for subsciteits
                 continue
 
             print (voter, votee, dir, ip, organic, cheater)

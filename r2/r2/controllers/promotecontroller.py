@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -30,7 +30,7 @@ from r2.lib.menus import *
 from r2.controllers import ListingController
 import sha
 
-from r2.controllers.reddit_base import RedditController
+from r2.controllers.sciteit_base import SciteitController
 
 from r2.lib.utils import make_offset_date
 from r2.lib.media import force_thumbnail, thumbnail_url
@@ -244,20 +244,20 @@ class PromoteController(ListingController):
                                       reference_date = promote.promo_datetime_now,
                                       business_days = False, 
                                       admin_override = True),
-                   sr = VSubmitSR('sr', promotion=True))
+                   sr = VSubmitSR('sr'))
     def POST_add_roadblock(self, form, jquery, dates, sr):
         if (form.has_errors('startdate', errors.BAD_DATE,
                             errors.BAD_FUTURE_DATE) or
             form.has_errors('enddate', errors.BAD_DATE,
                             errors.BAD_FUTURE_DATE, errors.BAD_DATE_RANGE)):
             return
-        if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                           errors.SUBREDDIT_NOTALLOWED,
-                           errors.SUBREDDIT_REQUIRED):
+        if form.has_errors('sr', errors.SUBSCITEIT_NOEXIST,
+                           errors.SUBSCITEIT_NOTALLOWED,
+                           errors.SUBSCITEIT_REQUIRED):
             return
         if dates and sr:
             sd, ed = dates
-            promote.roadblock_reddit(sr.name, sd.date(), ed.date())
+            promote.roadblock_sciteit(sr.name, sd.date(), ed.date())
             jquery.refresh()
 
     @validatedForm(VSponsorAdmin(),
@@ -267,11 +267,11 @@ class PromoteController(ListingController):
                                       reference_date = promote.promo_datetime_now,
                                       business_days = False, 
                                       admin_override = True),
-                   sr = VSubmitSR('sr', promotion=True))
+                   sr = VSubmitSR('sr'))
     def POST_rm_roadblock(self, form, jquery, dates, sr):
         if dates and sr:
             sd, ed = dates
-            promote.unroadblock_reddit(sr.name, sd.date(), ed.date())
+            promote.unroadblock_sciteit(sr.name, sd.date(), ed.date())
             jquery.refresh()
 
     @validatedForm(VSponsor('link_id'),
@@ -283,7 +283,7 @@ class PromoteController(ListingController):
                                   admin_override = True),
                    l     = VLink('link_id'),
                    bid   = VBid('bid', 'link_id', 'sr'),
-                   sr = VSubmitSR('sr', promotion=True),
+                   sr = VSubmitSR('sr'),
                    indx = VInt("indx"), 
                    targeting = VLength("targeting", 10))
     def POST_edit_campaign(self, form, jquery, l, indx,
@@ -324,11 +324,11 @@ class PromoteController(ListingController):
             return
 
         if targeting == 'one':
-            if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                               errors.SUBREDDIT_NOTALLOWED,
-                               errors.SUBREDDIT_REQUIRED):
+            if form.has_errors('sr', errors.SUBSCITEIT_NOEXIST,
+                               errors.SUBSCITEIT_NOTALLOWED,
+                               errors.SUBSCITEIT_REQUIRED):
                 # checking to get the error set in the form, but we can't
-                # check for rate-limiting if there's no subreddit
+                # check for rate-limiting if there's no subsciteit
                 return
             oversold = promote.is_roadblocked(sr.name, start, end)
             if oversold:

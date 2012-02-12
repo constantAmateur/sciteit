@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from validator import *
-from reddit_base import MinimalController
+from sciteit_base import MinimalController
 
 from r2.lib.scraper import get_media_embed
 from r2.lib.pages import MediaEmbedBody, ComScore, render_ad
@@ -53,7 +53,7 @@ class MediaembedController(MinimalController):
 
         return MediaEmbedBody(body = content).render()
 
-    def GET_comscore(self, reddit = None):
+    def GET_comscore(self, sciteit = None):
         return ComScore().render(style="html")
 
 class AdController(MinimalController):
@@ -66,9 +66,9 @@ class AdController(MinimalController):
                         request.fullpath,
                         random.choice(xrange(100)))
 
-    def GET_ad(self, reddit_name = None, keyword=None):
+    def GET_ad(self, sciteit_name = None, keyword=None):
         c.render_style = "html"
-        return render_ad(reddit_name=reddit_name, keyword=keyword)
+        return render_ad(sciteit_name=sciteit_name, keyword=keyword)
 
     def GET_ad_by_codename(self, codename = None):
         if not codename:

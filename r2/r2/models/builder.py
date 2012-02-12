@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -27,10 +27,10 @@ from listing import Listing
 from pylons import g
 from pylons.i18n import _
 
-import subreddit
+import subsciteit
 
 from r2.lib.comment_tree import moderator_messages, sr_conversation, conversation
-from r2.lib.comment_tree import user_messages, subreddit_messages
+from r2.lib.comment_tree import user_messages, subsciteit_messages
 
 from r2.lib.wrapped import Wrapped
 from r2.lib import utils
@@ -45,7 +45,7 @@ EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
 
 class Builder(object):
-    def __init__(self, wrap=Wrapped, keep_fn=None, stale=True):
+    def __init__(self, wrap = Wrapped, keep_fn = None, stale = True):
         self.stale = stale
         self.wrap = wrap
         self.keep_fn = keep_fn
@@ -80,12 +80,12 @@ class Builder(object):
             if user and user.gold:
                 friend_rels = user.friend_rels()
 
-        subreddits = Subreddit.load_subreddits(items, stale=self.stale)
+        subsciteits = Subsciteit.load_subsciteits(items, stale=self.stale)
 
         if not user:
             can_ban_set = set()
         else:
-            can_ban_set = set(id for (id,sr) in subreddits.iteritems()
+            can_ban_set = set(id for (id,sr) in subsciteits.iteritems()
                               if sr.can_ban(user))
 
         #get likes/dislikes
@@ -98,10 +98,10 @@ class Builder(object):
 
         modlink = {}
         modlabel = {}
-        for s in subreddits.values():
+        for s in subsciteits.values():
             modlink[s._id] = '/r/%s/about/moderators' % s.name
-            modlabel[s._id] = (_('moderator of /r/%(reddit)s, speaking officially') %
-                        dict(reddit = s.name) )
+            modlabel[s._id] = (_('moderator of /r/%(sciteit)s, speaking officially') %
+                        dict(sciteit = s.name) )
 
 
         for item in items:
@@ -173,7 +173,7 @@ class Builder(object):
                          link = "/user/%s" % w.author.name)
 
             if hasattr(item, "sr_id") and item.sr_id is not None:
-                w.subreddit = subreddits[item.sr_id]
+                w.subsciteit = subsciteits[item.sr_id]
 
             w.likes = likes.get((user, item))
 
@@ -214,7 +214,7 @@ class Builder(object):
             else:
                 w.ip_span = ""
 
-            # if the user can ban things on a given subreddit, or an
+            # if the user can ban things on a given subsciteit, or an
             # admin, then allow them to see that the item is spam, and
             # add the other spam-related display attributes
             w.show_reports = False
@@ -268,12 +268,13 @@ class Builder(object):
         user = c.user if c.user_is_loggedin else None
         if hasattr(item, "promoted") and item.promoted is not None:
             return False
-        if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
+        if hasattr(item, 'subsciteit') and not item.subsciteit.can_view(user):
             return True
 
 class QueryBuilder(Builder):
-    def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False, **kw):
-        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
+    def __init__(self, query, wrap = Wrapped, keep_fn = None,
+                 skip = False, **kw):
+        Builder.__init__(self, wrap, keep_fn)
         self.query = query
         self.skip = skip
         self.num = kw.get('num')
@@ -338,6 +339,9 @@ class QueryBuilder(Builder):
         last_item = None
         have_next = True
 
+        #for prewrap
+        orig_items = {}
+
         #logloop
         self.loopcount = 0
         
@@ -362,17 +366,16 @@ class QueryBuilder(Builder):
             if not first_item and self.start_count > 0:
                 first_item = new_items[0]
 
+            #pre-wrap
             if self.prewrap_fn:
-                orig_items = {}
                 new_items2 = []
                 for i in new_items:
                     new = self.prewrap_fn(i)
                     orig_items[new._id] = i
                     new_items2.append(new)
                 new_items = new_items2
-            else:
-                orig_items = dict((i._id, i) for i in new_items)
 
+            #wrap
             if self.wrap:
                 new_items = self.wrap_items(new_items)
 
@@ -388,8 +391,8 @@ class QueryBuilder(Builder):
                         i.num = count
                 last_item = i
         
-            # get original version of last item
-            if last_item and (self.prewrap_fn or self.wrap):
+            #unprewrap the last item
+            if self.prewrap_fn and last_item:
                 last_item = orig_items[last_item._id]
 
         if self.reverse:
@@ -550,7 +553,7 @@ class SrMessageBuilder(MessageBuilder):
     def get_tree(self):
         if self.parent:
             return sr_conversation(self.sr, self.parent)
-        return subreddit_messages(self.sr)
+        return subsciteit_messages(self.sr)
 
 class UserMessageBuilder(MessageBuilder):
     def __init__(self, user, **kw):

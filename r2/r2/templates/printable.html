@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -21,7 +21,7 @@
 ################################################################################
 
 <%! 
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_sr,static
    from r2.lib.strings import strings
    from r2.lib.pages.things import BanButtons
 %>
@@ -74,6 +74,8 @@ ${self.RenderPrintable()}
      rowclass += " saved"
    if hasattr(thing, "hidden") and thing.hidden:
      rowclass += " hidden"
+   #if hasattr(thing, "criticism") and thing.criticism and (thing.parent_id is None):
+   #  rowclass += " topCrit"
  %>
 <div class="${self.thing_css_class(thing)} ${rowclass} ${unsafe(cls)} ${selflink}"
     ${thing.display} data-fullname="${thing._fullname}" onclick="click_thing(this)">
@@ -146,10 +148,19 @@ ${self.RenderPrintable()}
 </%def>
 
 
-<%def name="midcol(display=True, cls = '')">
+<%def name="midcol(display=True, cls = '',tick=False)">
+  %if tick:
+    ${self.tick()}
+  %endif
   <div class="midcol ${cls}" 
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     ${self.arrow(thing, 0, thing.likes == False)}
+  </div>
+</%def>
+
+<%def name="tick()">
+  <div class="midbr">
+      <img src="${static('Ryan_Taylor_Green_Tick.png')}" height='28px'/>
   </div>
 </%def>

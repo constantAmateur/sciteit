@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController, MinimalController, make_key
+from sciteit_base import SciteitController, MinimalController, make_key
 from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
     ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage, UpgradeButtons
 from r2.lib.pages.things import wrap_links
@@ -80,7 +80,7 @@ class ButtonjsController(MinimalController):
                         request.referer,
                         request.fullpath)
 
-class ButtonsController(RedditController):
+class ButtonsController(SciteitController):
     def buttontype(self):
         b = request.get.get('t') or 1
         try: 
@@ -94,7 +94,7 @@ class ButtonsController(RedditController):
             if link:
                 links = [link]
             else:
-                sr = None if isinstance(c.site, FakeSubreddit) else c.site
+                sr = None if isinstance(c.site, FakeSubsciteit) else c.site
                 try:
                     links = tup(Link._by_url(url, sr))
                 except NotFound:
@@ -113,7 +113,7 @@ class ButtonsController(RedditController):
             return links
             # note: even if _by_url successed or a link was passed in,
             # it is possible link_listing.things is empty if the
-            # link(s) is/are members of a private reddit
+            # link(s) is/are members of a private sciteit
             # return the link with the highest score (if more than 1)
         except:
             #we don't want to return 500s in other people's pages.
@@ -130,7 +130,7 @@ class ButtonsController(RedditController):
         <head>
         </head>
         <body style='border:1px solid #336699;text-align:center;margin:0px'>
-           <a href='http://www.reddit.com/upgradebuttons' target='_top' style='color:red'>upgrade</a>
+           <a href='http://www.sciteit.com/upgradebuttons' target='_top' style='color:red'>upgrade</a>
         </body>
         </html>
         """
@@ -198,7 +198,7 @@ class ButtonsController(RedditController):
         # no buttons for domain listings -> redirect to top level
         if isinstance(c.site, DomainSR):
             return self.redirect('/buttons')
-        return BoringPage(_("reddit buttons"),
+        return BoringPage(_("sciteit buttons"),
                           show_sidebar = False, 
                           content=ButtonDemoPanel()).render()
 
@@ -206,13 +206,13 @@ class ButtonsController(RedditController):
         # no buttons for domain listings -> redirect to top level
         if isinstance(c.site, DomainSR):
             return self.redirect('/buttons')
-        return BoringPage(_("reddit buttons"),
+        return BoringPage(_("sciteit buttons"),
                           show_sidebar = False, 
                           content=UpgradeButtons()).render()
 
 
     def GET_widget_demo_page(self):
-        return BoringPage(_("reddit widget"),
+        return BoringPage(_("sciteit widget"),
                           show_sidebar = False, 
                           content=WidgetDemoPanel()).render()
 
@@ -223,7 +223,7 @@ class ButtonsController(RedditController):
 
     def GET_iphonebookmarklets(self):
         return BoringPage(_("submit"),
-                          title = "submit to reddit",
+                          title = "submit to sciteit",
                           show_sidebar = False, 
                           content=Bookmarklets()).render()
 

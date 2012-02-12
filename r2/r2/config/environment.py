@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -33,7 +33,7 @@ from   r2.config.routing import make_map
 import r2.lib.app_globals as app_globals
 from   r2.lib import  rpc
 import r2.lib.helpers
-import r2.config as reddit_config
+import r2.config as sciteit_config
 
 from r2.templates import tmpl_dirs
 
@@ -54,7 +54,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     g = config['pylons.g'] = app_globals.Globals(global_conf, app_conf, paths)
     if setup_globals:
         g.setup(global_conf)
-        reddit_config.cache = g.cache
+        sciteit_config.cache = g.cache
 
     config['pylons.h'] = r2.lib.helpers
     config['routes.map'] = map
@@ -68,7 +68,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     #tmpl_options['myghty.escapes'] = dict(l=webhelpers.auto_link, s=webhelpers.simple_format)
 
     tmpl_options = config['buffet.template_options']
-    tmpl_options['mako.filesystem_checks'] = getattr(g, 'reload_templates', False)
+    tmpl_options['mako.filesystem_checks'] = g.debug
     tmpl_options['mako.default_filters'] = ["mako_websafe"]
     tmpl_options['mako.imports'] = \
                                  ["from r2.lib.filters import websafe, unsafe, mako_websafe",

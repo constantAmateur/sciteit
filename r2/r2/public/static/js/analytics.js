@@ -2,7 +2,7 @@ r.analytics = {
     trackers: {},
 
     init: function() {
-        // these guys are relying on the custom 'onshow' from jquery.reddit.js
+        // these guys are relying on the custom 'onshow' from jquery.sciteit.js
         $(document).delegate(
             '.promotedlink.promoted, .sponsorshipbox',
             'onshow',

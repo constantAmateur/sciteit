@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -34,13 +34,14 @@ class PrintableButtons(Styled):
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
                  show_distinguish = False, show_marknsfw = False,
-                 show_unmarknsfw = False, show_indict = False, is_link=False, **kw):
+                 show_unmarknsfw = False, show_indict = False, is_link=False, show_nominate=False,**kw):
         show_ignore = (thing.show_reports or
                        (thing.reveal_trial_info and not thing.show_spam))
         approval_checkmark = getattr(thing, "approval_checkmark", None)
         show_approve = (thing.show_spam or show_ignore or
                         (is_link and approval_checkmark is None)) and not thing._deleted
 
+	#We don't have pron on sciteit, so no need for the buttons...
         Styled.__init__(self, style = style,
                         thing = thing,
                         fullname = thing._fullname,
@@ -54,8 +55,9 @@ class PrintableButtons(Styled):
                         show_report = show_report,
                         show_indict = show_indict,
                         show_distinguish = show_distinguish,
-                        show_marknsfw = show_marknsfw,
-                        show_unmarknsfw = show_unmarknsfw,
+                        show_marknsfw = False,
+                        show_unmarknsfw = False,
+			show_nominate = show_nominate,
                         **kw)
         
 class BanButtons(PrintableButtons):
@@ -116,7 +118,9 @@ class LinkButtons(PrintableButtons):
                                   new_window = c.user.pref_newwindow,
                                   # comment link params
                                   comment_label = thing.comment_label,
+                                  criticism_label = thing.criticism_label,
                                   commentcls = thing.commentcls,
+                                  criticismcls = thing.criticismcls,
                                   permalink  = thing.permalink,
                                   # button visibility
                                   saved = thing.saved,
@@ -129,6 +133,7 @@ class LinkButtons(PrintableButtons):
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,
                                   show_comments = comments,
+                                  show_criticisms = comments,
                                   # promotion
                                   promoted = thing.promoted,
                                   is_link = True,
@@ -136,15 +141,21 @@ class LinkButtons(PrintableButtons):
 
 class CommentButtons(PrintableButtons):
     def __init__(self, thing, delete = True, report = True):
+    	#Is it a crit?
+	is_criticism = thing.criticism
         # is the current user the author?
         is_author = thing.is_author
+	# is the curren user the author of the criticism to which this comment is replying to?
+	is_critrootauthor = thing.is_rootauthor
         # do we show the report button?
         show_report = not is_author and report and thing.can_reply
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
+	#Should we allow this user to nominate?
+	show_nominate = False and is_author and not thing.criticism
 
         show_distinguish = is_author and (thing.can_ban or c.user_special_distinguish)
-
+	#Unless it gets intercepted this all gets communicated down to Templated.init and then saved
         PrintableButtons.__init__(self, "commentbuttons", thing,
                                   is_author = is_author, 
                                   profilepage = c.profilepage,
@@ -156,7 +167,10 @@ class CommentButtons(PrintableButtons):
                                   can_reply = thing.can_reply,
                                   show_report = show_report,
                                   show_distinguish = show_distinguish,
-                                  show_delete = show_delete)
+                                  show_delete = show_delete,
+				  is_criticism=is_criticism,
+				  is_critrootauthor = is_critrootauthor,
+				  show_nominate = show_nominate)
 
 class MessageButtons(PrintableButtons):
     def __init__(self, thing, delete = False, report = True):

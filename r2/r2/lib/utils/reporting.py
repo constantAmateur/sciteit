@@ -8,7 +8,7 @@ from r2.lib.db import tdb_sql
 from r2.models.mail_queue import Email
 
 class Report(object):
-    """Class for creating reports based on reddit data"""
+    """Class for creating reports based on sciteit data"""
     def __init__(self, period=None, date=None):
         """Sets up the date storage."""
         self.period = period
@@ -61,7 +61,7 @@ class Report(object):
                       
     def css_stats(self, val, all_time=None):
         """Create stats related to custom css and headers."""
-        t = tdb_sql.get_thing_table('subreddit')[1]
+        t = tdb_sql.get_thing_table('subsciteit')[1]
         s = sa.select([sa.func.count(t.c.key)], t.c.key == val)
         return s.execute().fetchone()[0]
    
@@ -125,9 +125,9 @@ class TextReport(object):
 
     def build(self, show_all_time=True):
         """build a complete text report"""
-        rep = 'Subject: reddit stats %s %s\n\n' % (self.phrase, self.time)
+        rep = 'Subject: sciteit stats %s %s\n\n' % (self.phrase, self.time)
         
-        rep += self.process_things(['account','subreddit','link','message','comment'])
+        rep += self.process_things(['account','subsciteit','link','message','comment'])
         
         rep += "\n"
         rep += self.process_relation('valid votes', 'vote', 'valid_thing', 't')
@@ -139,12 +139,12 @@ class TextReport(object):
         rep += self.process_other('email', 'share emails rejected', 'reject')
 
         if show_all_time:
-            rep += self.process_other('css', 'subreddits with custom css', 
+            rep += self.process_other('css', 'subsciteits with custom css', 
                                       'stylesheet_hash', all_time=True)
-            rep += self.process_other('css', 'subreddits with a custom header', 
+            rep += self.process_other('css', 'subsciteits with a custom header', 
                                       'header', all_time=True)
             rep += "\n"
-            rep += self.process_things(['account','subreddit','link','message','comment'], 
+            rep += self.process_things(['account','subsciteit','link','message','comment'], 
                                    all_time=True)
 
         return rep

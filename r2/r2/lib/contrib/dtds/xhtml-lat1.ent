@@ -10,6 +10,7 @@
     %HTMLlat1;
 -->
 
+<!ELEMENT img (EMPTY)>
 <!ENTITY nbsp   "&#160;"> <!-- no-break space = non-breaking space,
                                   U+00A0 ISOnum -->
 <!ENTITY iexcl  "&#161;"> <!-- inverted exclamation mark, U+00A1 ISOnum -->

@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -30,7 +30,7 @@
   import simplejson
 %>
 <%namespace file="utils.html" 
-            import="error_field, checkbox, image_upload, reddit_selector" />
+            import="error_field, checkbox, image_upload, sciteit_selector" />
 <%namespace name="utils" file="utils.html"/>
 
 ${unsafe(js.use('sponsored'))}
@@ -77,7 +77,7 @@ ${unsafe(js.use('sponsored'))}
 
    <div class="help">
       <div class="infotext rounded" id="campaign-help">
-        <p>This dashboard allows you to easily place ads on reddit.
+        <p>This dashboard allows you to easily place ads on sciteit.
         You can target a specific community or simply run on the main
         page.
         </p></div>
@@ -160,7 +160,7 @@ ${unsafe(js.use('sponsored'))}
                   type="radio"  value="one" name="targeting"
                   onclick="return targeting_on(this)" /> 
            <label for="targeting">
-             enable targeting (runs on a specific reddit)
+             enable targeting (runs on a specific sciteit)
            </label>
            <p id="targeted_minimum" class="minimum-spend">minimum $30 / day</p>
            <script type="text/javascript">
@@ -188,12 +188,12 @@ ${unsafe(js.use('sponsored'))}
      </script>
      <div class="targeting" style="display:none">
        <ul>
-         <li>By targeting, your ad will only appear in front of users who subscribe to the reddit that you specify.</li>
-         <li>Your ad will also appear at the top of the hot listing for that reddit</li>
-         <li>You can only target one reddit per campaign.  If you would like to submit to more than one reddit, add a new campaign (its easy, you just fill this form out again).</li>
+         <li>By targeting, your ad will only appear in front of users who subscribe to the sciteit that you specify.</li>
+         <li>Your ad will also appear at the top of the hot listing for that sciteit</li>
+         <li>You can only target one sciteit per campaign.  If you would like to submit to more than one sciteit, add a new campaign (its easy, you just fill this form out again).</li>
        </ul>
        ${error_field("OVERSOLD", "sr", "div")}
-       ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
+       ${sciteit_selector(thing.default_sr, thing.sr_searches, thing.subsciteits)}
      </div>
      <div class="buttons">
        <input type="hidden" name="indx" value="" />
@@ -262,7 +262,7 @@ ${unsafe(js.use('sponsored'))}
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
     <div class="infotext rounded">
-        <p>A good title is important to the success of your campaign. reddit users are an intelligent, thoughtful group, and reward those who engage them</p>
+        <p>A good title is important to the success of your campaign. sciteit users are an intelligent, thoughtful group, and reward those who engage them</p>
         </div>
   </%utils:line_field>
 
@@ -295,7 +295,7 @@ ${unsafe(js.use('sponsored'))}
 
 %if thing.link and (trusted or not promote.is_promoted(thing.link)):
   <%utils:line_field title="${_('look and feel')}"
-                     description="images will be resized if larger than 70 x 70 pixels" css_class="rounded">
+                     description="images will be resized if large than 70 x 70 pixels" css_class="rounded">
     <div class="delete-field">
       <%utils:image_upload post_target="/api/link_thumb" 
                            current_image="${thumb}"
@@ -345,7 +345,7 @@ ${unsafe(js.use('sponsored'))}
         %endif
       </div>
       <div class="infotext rounded">
-          <p>Comments are a great way to get feedback from customers, and the reddit community is known for being vocal in comment threads.</p>
+          <p>Comments are a great way to get feedback from customers, and the sciteit community is known for being vocal in comment threads.</p>
       </div>
     </%utils:line_field>
     %if c.user_is_sponsor or c.user.trusted_sponsor:
@@ -383,7 +383,7 @@ ${unsafe(js.use('sponsored'))}
     %endif
 %else:
      <div class="rules">
-       By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/help/selfservicepromotion">Self Serve Advertising Rules.</a>
+       By clicking "next" you agree to the&#32;<a href="http://www.sciteit.com/help/selfservicepromotion">Self Serve Advertising Rules.</a>
    </div>
 %endif
 

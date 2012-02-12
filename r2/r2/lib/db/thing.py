@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -245,6 +245,9 @@ class DataThing(object):
                               for k in keys if self._dirties.has_key(k))
             else:
                 to_set = dict((k, v[1]) for k, v in self._dirties.iteritems())
+		disp=False
+		if "children" in to_set:
+			disp=True
 
             data_props = {}
             thing_props = {}
@@ -354,6 +357,7 @@ class DataThing(object):
     def _byID(cls, ids, data=False, return_dict=True, extra_props=None,
               stale=False, check_essentials=True):
         ids, single = tup(ids, True)
+	doprint=len(ids)==37
         prefix = thing_prefix(cls.__name__)
 
         if not all(x <= tdb.MAX_THING_ID for x in ids):
@@ -366,7 +370,13 @@ class DataThing(object):
 
             return items
 
+	
         bases = sgm(cache, ids, items_db, prefix, stale=stale)
+	if doprint:
+		items=cls._get_item(cls._type_id,ids)
+		for i in items.keys():
+			items[i] = cls._build(i,items[i])
+
 
         #check to see if we found everything we asked for
         for i in ids:
@@ -386,6 +396,8 @@ class DataThing(object):
                 v._asked_for_data = True
                 if not v._loaded:
                     need.append(v)
+	    if doprint:
+	        print need
             if need:
                 cls._load_multi(need, check_essentials)
 ### The following is really handy for debugging who's forgetting data=True:
@@ -659,7 +671,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _type_prefix = Relation._type_prefix
         _eagerly_loaded_data = False
 
-        # data means, do you load the reddit_data_rel_* fields (the data on the
+        # data means, do you load the sciteit_data_rel_* fields (the data on the
         # rel itself). eager_load means, do you load thing1 and thing2
         # immediately. It calls _byID(xxx, data=thing_data).
         @classmethod
@@ -990,6 +1002,7 @@ class Query(object):
             rules.sort()
             for r in rules:
                 i += str(r)
+	print "Hashing with string %s" %i
         return sha.new(i).hexdigest()
 
     def __iter__(self):

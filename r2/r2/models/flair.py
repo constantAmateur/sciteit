@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -31,9 +31,9 @@ from r2.lib.db.userrel import UserRel
 from r2.lib.memoize import memoize
 from r2.lib.utils import to36
 from account import Account
-from subreddit import Subreddit
+from subsciteit import Subsciteit
 
-class Flair(Relation(Subreddit, Account)):
+class Flair(Relation(Subsciteit, Account)):
     @classmethod
     def store(cls, sr, account, text = None, css_class = None):
         flair = cls(sr, account, 'flair', text = text, css_class = css_class)
@@ -68,7 +68,7 @@ class Flair(Relation(Subreddit, Account)):
         sort = (desc if reverse else asc)('_thing2_id')
         return cls._query(*extra_rules, sort=sort, limit=limit)
 
-Subreddit.__bases__ += (UserRel('flair', Flair,
+Subsciteit.__bases__ += (UserRel('flair', Flair,
                                 disable_ids_fn = True,
                                 disable_reverse_ids_fn = True),)
 
@@ -83,7 +83,7 @@ class FlairTemplate(tdb_cassandra.Thing):
     _bool_props = ('text_editable',)
 
     _use_db = True
-    _connection_pool = 'main'
+    _use_new_ring = True
 
     @classmethod
     def _new(cls, text='', css_class='', text_editable=False):
@@ -125,19 +125,19 @@ class FlairTemplate(tdb_cassandra.Thing):
         return self.text_editable or (not text_editable and self.text == text)
 
 
-class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
-    """A list of FlairTemplate IDs for a subreddit.
+class FlairTemplateBySubsciteitIndex(tdb_cassandra.Thing):
+    """A list of FlairTemplate IDs for a subsciteit.
 
     The FlairTemplate references are stored as an arbitrary number of attrs.
     The lexicographical ordering of these attr names gives the ordering for
-    flair templates within the subreddit.
+    flair templates within the subsciteit.
     """
 
     MAX_FLAIR_TEMPLATES = 256
 
     _int_props = ('sr_id',)
     _use_db = True
-    _connection_pool = 'main'
+    _use_new_ring = True
 
     _key_prefix = 'ft_'
 
@@ -187,7 +187,7 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
             idx = cls.by_sr(sr_id)
         except tdb_cassandra.NotFound:
             # Everything went better than expected.
-            return
+            pass
 
         for k in idx._index_keys():
             del idx[k]

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -22,7 +22,7 @@
 from r2.lib.db.thing import Thing, Relation, NotFound
 from r2.lib.db.operators import asc, desc, lower
 from r2.lib.memoize import memoize
-from r2.models import Subreddit
+from r2.models import Subsciteit
 from pylons import c, g, request
 
 class Ad (Thing):
@@ -71,7 +71,7 @@ class Ad (Thing):
         from r2.lib.template_helpers import get_domain
         from mako.filters import url_escape
 
-        d = get_domain(subreddit=False)
+        d = get_domain(subsciteit=False)
         u = self.url()
 
         return "http://%s/r/ads/submit?url=%s" % (d, url_escape(u))
@@ -86,7 +86,7 @@ class Ad (Thing):
         return dict(rendering=self.rendering(), linkurl=self.linkurl,
                     submit_link=self.submit_link())
 
-class AdSR(Relation(Ad, Subreddit)):
+class AdSR(Relation(Ad, Subsciteit)):
     @classmethod
     def _new(cls, ad, sr, weight=100):
         t = AdSR(ad, sr, "adsr")
@@ -132,7 +132,7 @@ class AdSR(Relation(Ad, Subreddit)):
             return cls.by_sr(sr)
 
         my_adsrs =     cls.by_sr(sr)
-        global_adsrs = cls.by_sr(Subreddit._by_name(g.default_sr, stale=True))
+        global_adsrs = cls.by_sr(Subsciteit._by_name(g.default_sr, stale=True))
 
         seen = {}
         for adsr in my_adsrs:

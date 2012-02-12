@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -175,11 +175,11 @@ class Templated(object):
         from r2.config.templates import tpm
         from pylons import g
 
-        use_cache = not g.reload_templates
+        debug = g.template_debug
         template = None
         try:
             template = tpm.get(self.render_class,
-                               style, cache = use_cache)
+                               style, cache = not debug)
         except AttributeError:
             self._notfound(style)
         return template
@@ -460,7 +460,7 @@ class CachedTemplate(Templated):
                 getattr(c.user, "gold", False),
                 template_hash]
 
-        # if viewing a single subreddit, take flair settings into account.
+        # if viewing a single subsciteit, take flair settings into account.
         if c.user and hasattr(c.site, '_id'):
             keys.extend([
                 c.site.flair_enabled, c.site.flair_position,

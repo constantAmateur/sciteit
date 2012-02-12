@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution.
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -22,7 +22,7 @@
 
 <%!
    import json
-   from r2.models import FakeSubreddit
+   from r2.models import FakeSubsciteit
    from r2.lib.filters import spaceCompress, unsafe
    from r2.lib.template_helpers import add_sr, js_config, static
    from r2.lib.utils import cols, long_datetime, timesince
@@ -138,7 +138,7 @@ ${first_defined(kw[1:])}
          kw['target'] = target
 
      link = _a_buffered(link_text, 
-                        href=path and add_sr(path, sr_path=_sr_path, nocname=nocname),
+                        href=add_sr(path, sr_path=_sr_path, nocname=nocname), 
                         **kw) 
   %>
 
@@ -199,7 +199,7 @@ ${unsafe(txt)}
   %endif
   %for x in langs:
   <option ${x == default_lang  and "selected='selected'" or ""} value="${x}">
-    ${g.lang_name[x][0]} [${x}] ${g.lang_name[x][1]}
+    ${g.lang_name[x]} [${x}]
   </option>
   %endfor
 </select>
@@ -237,7 +237,7 @@ ${unsafe(txt)}
     %>
     <input type="checkbox" name="${idname}" id="${idname}"
            onclick="check_some_langs(this)" ${checked}/>
-    <label for="${idname}">${g.lang_name[lang][0]}</label>
+    <label for="${idname}">${g.lang_name[lang]}</label>
     </td>
   %endfor
   </tr>
@@ -479,7 +479,7 @@ ${unsafe(txt)}
   </tr>
 </%def>
 
-<%def name="reddit_selector(default_sr, sr_searches, subreddits)">
+<%def name="sciteit_selector(default_sr, sr_searches, subsciteits)">
     <div id="sr-autocomplete-area">
       <input id="sr-autocomplete" name="sr" type="text"
              autocomplete="off"
@@ -489,22 +489,22 @@ ${unsafe(txt)}
              value = "${default_sr}" />
       <ul id="sr-drop-down">
         <li class="sr-name-row"
-            onmouseover="highlight_reddit(this)"
+            onmouseover="highlight_sciteit(this)"
             onmousedown="return sr_dropdown_mdown(this)"
             onmouseup="sr_dropdown_mup(this)">nothin</li>
       </ul>
     </div>
     <script type="text/javascript">
-      reddit.sr_cache = ${unsafe(sr_searches)};
+      sciteit.sr_cache = ${unsafe(sr_searches)};
     </script>
-    ${error_field("SUBREDDIT_NOEXIST", "sr", "div")}
-    ${error_field("SUBREDDIT_NOTALLOWED", "sr", "div")}
-    ${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
+    ${error_field("SUBSCITEIT_NOEXIST", "sr", "div")}
+    ${error_field("SUBSCITEIT_NOTALLOWED", "sr", "div")}
+    ${error_field("SUBSCITEIT_REQUIRED", "sr", "div")}
 
-    <div id="suggested-reddits">
+    <div id="suggested-sciteits">
         <span class="">${_("popular choices")}&#32;</span>
       <ul>
-        %for name in subreddits:
+        %for name in subsciteits:
         <li>
           <a href="#" tabindex="100" onclick="set_sr_name(this); return false">${name}</a>&#32;
         </li>

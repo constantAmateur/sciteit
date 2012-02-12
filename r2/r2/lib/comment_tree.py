@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -26,7 +26,7 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib.cache import sgm
 from r2.models.link import Link
 
-MAX_ITERATIONS = 25000
+MAX_ITERATIONS = 20000
 
 def comments_key(link_id):
     return 'comments_' + str(link_id)
@@ -169,7 +169,10 @@ def delete_comment(comment):
 
         # update the link's comment count and schedule it for search reindexing
         link = Link._byID(comment.link_id, data = True)
-        link._incr('num_comments', -1)
+	if comment.criticism:
+            link._incr('num_criticisms', -1)
+	else:
+            link._incr('num_comments', -1)
         from r2.lib.db.queries import changed
         changed(link)
 
@@ -201,9 +204,37 @@ def _get_comment_sorter(link_id, sort):
                   for (c_id, val) in sorter.iteritems())
     return sorter
 
+def get_bestresponses(link_id):
+    from r2.models import Comment
+    # This is a function that should return the id36ed ids of those criticisms that should be given prvilidge (if any)
+    #We should put some stuff about looking in the cache here...
+    return _load_br_criticisms(link_id)
+
+def _load_br_criticisms(link_id):
+    from r2.models import Comment
+    q = Comment._query(Comment.c.link_id == link_id,
+                       Comment.c._deleted == (True, False),
+                       Comment.c._spam == (True, False),
+                       optimize_rules=True,
+                       data = True)
+    comments = list(q)
+    brs = [c for c in comments if c.bestresponse==True]
+    #print "SQUIRRREL!"
+    #print comments
+    #print link_id
+    outs = [c._id for c in brs]
+    ups = [c.parent_id for c in brs if c.parent_id]
+    while ups:
+    	brs = [c for c in comments if c._id in ups]
+        outs.extend([c._id for c in brs])
+        ups = [c.parent_id for c in brs if c.parent_id]
+    
+    return outs
+
 def link_comments_and_sort(link_id, sort):
     from r2.models import Comment, CommentSortsCache
-
+    #print "Linking"
+    #print get_bestresponses(link_id)
     # This has grown sort of organically over time. Right now the
     # cache of the comments tree consists in three keys:
     # 1. The comments_key: A tuple of
@@ -224,7 +255,38 @@ def link_comments_and_sort(link_id, sort):
     g.permacache.get_multi([comments_key(link_id),
                             parent_comments_key(link_id)])
 
+
     cids, cid_tree, depth, num_children = link_comments(link_id)
+    #print "SQUIRREL!"
+    #items = Comment._byID(cids, data = True, return_dict = False)
+    #for it in items:
+    #	if it._id36=="6u":
+    #		print it._moocow
+    #bad=[]
+    #for it in items:
+    #	try:
+    #		tmp=it._moocow
+    #except AttributeError:
+    #		bad.append(it._id)
+    #print bad
+    #print cid_tree
+    #for key in cid_tree.keys():
+    #    for b in bad:
+    #	        cid_tree[key].remove(b)
+
+    #print cid_tree
+    #for b in bad:
+    #	cids.remove(b)
+    #cid_tree={None:[224L]}
+    #print cids
+    #cids=[224L]
+    #for b in bad:
+    #	del depth[b]
+    #del num_children[b]
+    #print depth
+    #cids={224L:0}
+    #print num_children
+    #num_children={224L:0}
 
     # load the sorter
     sorter = _get_comment_sorter(link_id, sort)
@@ -258,7 +320,7 @@ def link_comments_and_sort(link_id, sort):
                     % link_id)
         parents = {}
 
-    if not parents and len(cids) > 0:
+    if not parents:
         with g.make_lock(lock_key(link_id)):
             # reload from the cache so the sorter and parents are
             # maximally consistent
@@ -469,23 +531,23 @@ def sr_messages_lock_key(sr_id):
     return 'sr_messages_conversation_lock_' + str(sr_id)
 
 
-def subreddit_messages(sr, update = False):
+def subsciteit_messages(sr, update = False):
     key = sr_messages_key(sr._id)
     trees = g.permacache.get(key)
     if not trees or update:
-        trees = subreddit_messages_nocache(sr)
+        trees = subsciteit_messages_nocache(sr)
         g.permacache.set(key, trees)
     return trees
 
 def moderator_messages(user):
-    from r2.models import Subreddit
-    sr_ids = Subreddit.reverse_moderator_ids(user)
+    from r2.models import Subsciteit
+    sr_ids = Subsciteit.reverse_moderator_ids(user)
 
     def multi_load_tree(sr_ids):
-        srs = Subreddit._byID(sr_ids, return_dict = False)
+        srs = Subsciteit._byID(sr_ids, return_dict = False)
         res = {}
         for sr in srs:
-            trees = subreddit_messages_nocache(sr)
+            trees = subsciteit_messages_nocache(sr)
             if trees:
                 res[sr._id] = trees
         return res
@@ -495,12 +557,12 @@ def moderator_messages(user):
 
     return sorted(chain(*res.values()), key = tree_sort_fn, reverse = True)
 
-def subreddit_messages_nocache(sr):
+def subsciteit_messages_nocache(sr):
     """
     Just like user_messages, but avoiding the cache
     """
     from r2.lib.db import queries
-    inbox = _process_message_query(queries.get_subreddit_messages(sr))
+    inbox = _process_message_query(queries.get_subsciteit_messages(sr))
     messages = _load_messages(inbox)
     return compute_message_trees(messages)
 
@@ -509,7 +571,7 @@ def add_sr_message_nolock(sr_id, message):
     return _add_message_nolock(sr_messages_key(sr_id), message)
 
 def sr_conversation(sr, parent):
-    trees = dict(subreddit_messages(sr))
+    trees = dict(subsciteit_messages(sr))
     return _conversation(trees, parent)
 
 

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -22,7 +22,6 @@
 
 import os
 import re
-import hashlib
 import Image
 import subprocess
 
@@ -45,10 +44,10 @@ def _extract_css_info(match):
 
 
 class SpritableImage(object):
-    def __init__(self, image, should_stretch=False):
-        self.image = image
+    def __init__(self, base_dir, filename, should_stretch=False):
+        self.filename = filename
         self.stretch = should_stretch
-        self.filenames = []
+        self.image = Image.open(os.path.join(base_dir, filename))
 
     @property
     def width(self):
@@ -90,17 +89,12 @@ def _load_spritable_images(css_filename):
                 continue
 
             image_filename, should_stretch = _extract_css_info(m)
-            image = Image.open(os.path.join(css_location, image_filename))
-            image_hash = hashlib.md5(image.convert("RGBA").tostring()).hexdigest()
 
-            if image_hash not in images:
-                images[image_hash] = SpritableImage(image, should_stretch)
+            if image_filename not in images:
+                images[image_filename] = SpritableImage(css_location, image_filename, should_stretch)
             else:
-                assert images[image_hash].stretch == should_stretch
-            images[image_hash].filenames.append(image_filename)
-
-    # Sort images by filename to group the layout by names when possible.
-    return sorted(images.values(), key=lambda i: i.filenames[0])
+                assert images[image_filename].stretch == should_stretch
+    return images.values()
 
 
 def _generate_sprite(images, sprite_path):
@@ -155,8 +149,7 @@ def _rewrite_css(css_filename, sprite_path, images):
     # map filenames to coordinates
     locations = {}
     for image in images:
-        for filename in image.filenames:
-            locations[filename] = image.sprite_location
+        locations[image.filename] = image.sprite_location
 
     def rewrite_sprite_reference(match):
         image_filename, should_stretch = _extract_css_info(match)
@@ -164,8 +157,7 @@ def _rewrite_css(css_filename, sprite_path, images):
 
         return ''.join((
             'background-image: url(%s);' % sprite_path,
-            'background-position: -%dpx -%dpx;' % position,
-            'background-repeat: %s;' % ('repeat' if should_stretch else 'no-repeat'),
+            'background-position: -%dpx -%dpx;' % position
         ))
 
     # read in the css and replace sprite references

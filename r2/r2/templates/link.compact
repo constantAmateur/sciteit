@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -99,8 +99,8 @@
   </div>
   <div class="clear options_expando hidden">
     <% 
-       subject = "[reddit] I wanted to share this link with you"
-       body = """%(user)s shared a link with you from reddit (http://www.reddit.com/):
+       subject = "[sciteit] I wanted to share this link with you"
+       body = """%(user)s shared a link with you from sciteit (http://www.sciteit.com/):
 
 %(link)s
 
@@ -109,11 +109,11 @@
 there's also a discussion going on here:
 
 %(permalink)s
-""" % dict(user = c.user.name if c.user_is_Loggedin else "A reddit user",
+""" % dict(user = c.user.name if c.user_is_Loggedin else "A sciteit user",
        link = _force_unicode(thing.url),
        title = _force_unicode(thing.title),
        permalink = add_sr(thing.permalink, sr_path = False, force_hostname = True, retain_extension=False))
-       url = "http://reddit.com/%s" % thing._id36
+       url = "http://sciteit.com/%s" % thing._id36
        title = _force_unicode(thing.title)
        tweet = "%s %s" % (title[0:(139-len(url))], url)
        %>

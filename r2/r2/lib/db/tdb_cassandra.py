@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -19,7 +19,6 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-import inspect
 from datetime import datetime
 from socket import gethostbyaddr
 
@@ -27,20 +26,19 @@ from pylons import g
 
 from pycassa import ColumnFamily
 from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
-from pycassa.system_manager import SystemManager, UTF8_TYPE, COUNTER_COLUMN_TYPE, TIME_UUID_TYPE
+from pycassa.system_manager import SystemManager, UTF8_TYPE
+
 from r2.lib.utils import tup, Storage
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib import cache
-from uuid import uuid1, UUID
+from uuid import uuid1
 from itertools import chain
 import cPickle as pickle
-from pycassa.util import OrderedDict
 
-connection_pools = g.cassandra_pools
-default_connection_pool = g.cassandra_default_pool
-
-keyspace = 'reddit'
+cassandra = g.cassandra
 thing_cache = g.thing_cache
+seeds = g.cassandra_seeds
+keyspace = 'sciteit'
 disallow_db_writes = g.disallow_db_writes
 tz = g.tz
 log = g.log
@@ -54,9 +52,9 @@ thing_types = {}
 
 # The available consistency levels
 CL = Storage(ANY    = ConsistencyLevel.ANY,
-             ONE    = ConsistencyLevel.ONE,
-             QUORUM = ConsistencyLevel.QUORUM,
-             ALL    = ConsistencyLevel.ALL)
+		ONE    = ConsistencyLevel.ONE,
+		QUORUM = ConsistencyLevel.QUORUM,
+		ALL    = ConsistencyLevel.ALL)
 
 # the greatest number of columns that we're willing to accept over the
 # wire for a given row (this should be increased if we start working
@@ -95,7 +93,7 @@ def will_write(fn):
         return fn(*a, **kw)
     return _fn
 
-def get_manager(seeds):
+def get_manager():
     # n.b. does not retry against multiple servers
     server = seeds[0]
     return SystemManager(server)
@@ -127,12 +125,8 @@ class ThingMeta(type):
             if not getattr(cls, "_write_consistency_level", None):
                 cls._write_consistency_level = write_consistency_level
 
-            pool_name = getattr(cls, "_connection_pool", default_connection_pool)
-            connection_pool = connection_pools[pool_name]
-            cassandra_seeds = connection_pool.server_list
-
             try:
-                cls._cf = ColumnFamily(connection_pool,
+                cls._cf = ColumnFamily(cassandra,
                                        cf_name,
                                        read_consistency_level = cls._read_consistency_level,
                                        write_consistency_level = cls._write_consistency_level)
@@ -140,25 +134,16 @@ class ThingMeta(type):
                 if not db_create_tables:
                     raise
 
-                manager = get_manager(cassandra_seeds)
-
-                # allow subclasses to add creation args or override base class ones
-                extra_creation_arguments = {}
-                for c in reversed(inspect.getmro(cls)):
-                    creation_args = getattr(c, "_extra_schema_creation_args", {})
-                    extra_creation_arguments.update(creation_args)
+                manager = get_manager()
 
                 log.warning("Creating Cassandra Column Family %s" % (cf_name,))
                 with make_lock('cassandra_schema'):
                     manager.create_column_family(keyspace, cf_name,
-                                                 comparator_type = cls._compare_with,
-                                                 super=getattr(cls, '_super', False),
-                                                 **extra_creation_arguments
-                                                 )
+                                                 comparator_type = cls._compare_with)
                 log.warning("Created Cassandra Column Family %s" % (cf_name,))
 
                 # try again to look it up
-                cls._cf = ColumnFamily(connection_pool,
+                cls._cf = ColumnFamily(cassandra,
                                        cf_name,
                                        read_consistency_level = cls._read_consistency_level,
                                        write_consistency_level = cls._write_consistency_level)
@@ -167,36 +152,6 @@ class ThingMeta(type):
 
     def __repr__(cls):
         return '<thing: %s>' % cls.__name__
-
-class Counter(object):
-    __metaclass__ = ThingMeta
-
-    _use_db = False
-    _connection_pool = 'noretries'
-    _extra_schema_creation_args = {
-        'default_validation_class': COUNTER_COLUMN_TYPE,
-        'replicate_on_write': True
-    }
-
-    _type_prefix = None
-    _cf_name = None
-    _compare_with = UTF8_TYPE
-
-    @classmethod
-    def _byID(cls, key):
-        return cls._cf.get(key)
-
-    @classmethod
-    @will_write
-    def _incr(cls, key, column, delta=1, super_column=None):
-        cls._cf.add(key, column, delta, super_column)
-
-    @classmethod
-    @will_write
-    def _incr_multi(cls, key, data):
-        with cls._cf.batch() as b:
-            b.insert(key, data)
-
 
 class ThingBase(object):
     # base class for Thing and Relation
@@ -294,7 +249,7 @@ class ThingBase(object):
             raise TdbException("Cannot make instances of %r" % (self.__class__,))
 
     @classmethod
-    def _byID(cls, ids, return_dict=True, properties=None):
+    def _byID(cls, ids, properties=None):
         ids, is_single = tup(ids, True)
 
         if properties is not None:
@@ -307,7 +262,7 @@ class ThingBase(object):
             return {}
 
         # all keys must be strings or directly convertable to strings
-        assert all(isinstance(_id, basestring) or str(_id) for _id in ids)
+        assert all(isinstance(_id, basestring) and str(_id) for _id in ids)
 
         def reject_bad_partials(cached, still_need):
             # tell sgm that the match it found in the cache isn't good
@@ -368,10 +323,8 @@ class ThingBase(object):
         elif is_single:
             assert len(ret) == 1
             return ret.values()[0]
-        elif return_dict:
-            return ret
-        else:
-            return filter(None, (ret.get(i) for i in ids))
+
+        return ret
 
     @property
     def _fullname(self):
@@ -382,7 +335,7 @@ class ThingBase(object):
         return '%s_%s' % (self._type_prefix, self._id)
 
     @classmethod
-    def _by_fullname(cls, fnames, return_dict=True):
+    def _by_fullname(cls, fnames):
         ids, is_single = tup(fnames, True)
 
         by_cls = {}
@@ -396,13 +349,8 @@ class ThingBase(object):
         for typ, ids in by_cls.iteritems():
             items.extend(typ._byID(ids).values())
 
-        if is_single:
-            return items[0]
-        elif return_dict:
-            return dict((x._fullname, x) for x in items)
-        else:
-            d = dict((x._fullname, x) for x in items)
-            return [d[fullname] for fullname in fnames]
+        return items[0] if is_single else dict((x._fullname, x)
+                                               for x in items)
 
     @classmethod
     def _cache_prefix(cls):
@@ -736,34 +684,6 @@ class ThingBase(object):
 class Thing(ThingBase):
     _timestamp_prop = 'date'
 
-class UuidThing(ThingBase):
-    _timestamp_prop = 'date'
-    _extra_schema_creation_args = {
-        'key_validation_class': TIME_UUID_TYPE
-    }
-
-    def __init__(self, **kw):
-        ThingBase.__init__(self, _id=uuid1(), **kw)
-
-    @classmethod
-    def _byID(cls, ids, **kw):
-        ids, is_single = tup(ids, ret_is_single=True)
-
-        #Convert string ids to UUIDs before retrieving
-        uuids = [UUID(id) if not isinstance(id, UUID) else id for id in ids]
-
-        if len(uuids) == 0:
-            return {}
-        elif is_single:
-            assert len(uuids) == 1
-            uuids = uuids[0]
-
-        return super(UuidThing, cls)._byID(uuids, **kw)
-
-    @classmethod
-    def _cache_key_id(cls, t_id):
-        return cls._cache_prefix() + str(t_id)
-
 class Relation(ThingBase):
     _timestamp_prop = 'date'
 
@@ -869,205 +789,6 @@ class Relation(ThingBase):
         # ick
         return str(long(cls._serialize_date(date)))
 
-class ColumnQuery(object):
-    """
-    A query across a row of a CF.
-    """
-    _chunk_size = 100
-
-    def __init__(self, cls, rowkeys, column_start="", column_finish="", 
-                 column_count=100, column_reversed=True, 
-                 column_to_obj=None,
-                 obj_to_column=None):
-        self.cls = cls
-        self.rowkeys = rowkeys
-        self.column_start = column_start
-        self.column_finish = column_finish
-        self._limit = column_count
-        self.column_reversed = column_reversed
-        self.column_to_obj = column_to_obj or self.default_column_to_obj
-        self.obj_to_column = obj_to_column or self.default_obj_to_column
-        self._rules = []    # dummy parameter to mimic tdb_sql queries
-
-        # Sorting for TimeUuid objects
-        if self.cls._compare_with == TIME_UUID_TYPE:
-            def sort_key(i):
-                return i.time
-        else:
-            def sort_key(i):
-                return i
-        self.sort_key = sort_key
-
-    @staticmethod
-    def combine(queries):
-        raise NotImplementedError
-
-    @staticmethod
-    def default_column_to_obj(columns):
-        """
-        Mapping from column --> object. 
-        
-        This default doesn't actually return the underlying object but we don't 
-        know how to do that without more information. 
-        """
-        return columns
-
-    @staticmethod
-    def default_obj_to_column(objs):
-        """
-        Mapping from object --> column
-        """
-        objs, is_single = tup(objs, ret_is_single=True)
-        columns = [{obj._id: obj._id} for obj in objs]
-
-        if is_single:
-            return columns[0]
-        else:
-            return columns
-
-    def _after(self, thing):
-        if thing:
-            column_name = self.obj_to_column(thing).keys()[0]
-            self.column_start = column_name
-        else:
-            self.column_start = ""
-
-    def _after_id(self, column_name):
-        self.column_start = column_name
-
-    def _reverse(self):
-        # Logic of standard reddit query is opposite of cassandra
-        self.column_reversed = False
-
-    def __iter__(self, yield_column_names=False):
-        retrieved = 0
-        column_start = self.column_start
-        while retrieved < self._limit:
-            try:
-                column_count = min(self._chunk_size, self._limit - retrieved)
-                if column_start:
-                    column_count += 1   # cassandra includes column_start
-                r = self.cls._cf.multiget(self.rowkeys,
-                                          column_start=column_start,
-                                          column_finish=self.column_finish,
-                                          column_count=column_count,
-                                          column_reversed=self.column_reversed)
-
-                # multiget returns OrderedDict {rowkey: {column_name: column_value}}
-                # combine into single OrderedDict of {column_name: column_value}
-                nrows = len(r.keys())
-                if nrows == 0:
-                    return
-                elif nrows == 1:
-                    columns = r.values()[0]
-                else:
-                    r_combined = {}
-                    for d in r.values():
-                        r_combined.update(d)
-                    columns = OrderedDict(sorted(r_combined.items(),
-                                                 key=lambda t: self.sort_key(t[0]),
-                                                 reverse=self.column_reversed))
-            except NotFoundException:
-                return
-
-            retrieved += self._chunk_size
-
-            if column_start:
-                try:
-                    del columns[column_start]
-                except KeyError:
-                    columns.popitem(last=True)  # remove extra column
-
-            if not columns:
-                return
-
-            # Convert to list of columns
-            l_columns = [{col_name: columns[col_name]} for col_name in columns]
-
-            column_start = l_columns[-1].keys()[0]
-            objs = self.column_to_obj(l_columns)
-
-            if yield_column_names:
-                column_names = [column.keys()[0] for column in l_columns]
-                if len(column_names) == 1:
-                    ret = (column_names[0], objs),
-                else:
-                    ret = zip(column_names, objs)
-            else:
-                ret = objs
-
-            ret, is_single = tup(ret, ret_is_single=True)
-            for r in ret:
-                yield r
-
-    def __repr__(self):
-        return "<%s(%s-%r)>" % (self.__class__.__name__, self.cls.__name__, 
-                                self.rowkeys)
-
-class MultiColumnQuery(object):
-    def __init__(self, queries, num, sort_key=None):
-        self.num = num
-        self._queries = queries
-        self.sort_key = sort_key    # python doesn't sort UUID1's correctly, need to pass in a sorter
-        self._rules = []            # dummy parameter to mimic tdb_sql queries
-
-    def _after(self, thing):
-        for q in self._queries:
-            q._after(thing)
-
-    def _reverse(self):
-        for q in self._queries:
-            q._reverse()
-
-    def __setattr__(self, attr, val):
-        # Catch _limit to set on all queries
-        if attr == '_limit':
-             for q in self._queries:
-                 q._limit = val
-        else:
-            object.__setattr__(self, attr, val)
-
-    def __iter__(self):
-
-        if self.sort_key:
-            def sort_key(tup):
-                # Need to point the supplied sort key at the correct item in 
-                # the (sortable, item, generator) tuple
-                return self.sort_key(tup[0])
-        else:
-            def sort_key(tup):
-                return tup[0]
-
-        top_items = []
-        for q in self._queries:
-            try:
-                gen = q.__iter__(yield_column_names=True)
-                column_name, item = gen.next()
-                top_items.append((column_name, item, gen))
-            except StopIteration:
-                pass
-        top_items.sort(key=sort_key)
-
-        def _update(top_items):
-            # Remove the first item from combined query and update the list
-            head = top_items.pop(0)
-            item = head[1]
-            gen = head[2]
-
-            # Try to get a new item from the query that gave us the current one
-            try:
-                column_name, item = gen.next()
-                top_items.append((column_name, item, gen)) # if multiple queues have the same item value the sort is somewhat undefined
-                top_items.sort(key=sort_key)
-            except StopIteration:
-                pass
-
-        num_ret = 0
-        while top_items and num_ret < self.num:
-            yield top_items[0][1]
-            _update(top_items)
-            num_ret += 1
-
 class Query(object):
     """A query across a CF. Note that while you can query rows from a
        CF that has a RandomPartitioner, you won't get them in any sort
@@ -1151,79 +872,32 @@ class Query(object):
 
 class View(ThingBase):
     # Views are Things like any other, but may have special key
-    # characteristics. Uses ColumnQuery for queries across a row. 
+    # characteristics
 
+    # these default to not having a timestamp column
     _timestamp_prop = None
+
     _value_type = 'str'
-
-    _compare_with = UTF8_TYPE   # Type of the columns - should match _key_validation_class of _view_of class
-    _view_of = None
-    _write_consistency_level = CL.ONE   # Is this necessary?
-    _query_cls = ColumnQuery
-
-    @classmethod
-    def _rowkey(cls, obj):
-        """Mapping from _view_of object --> view rowkey. No default
-        implementation is provided because this is the fundamental aspect of the
-        view."""
-        raise NotImplementedError
-
-    @classmethod
-    def _obj_to_column(cls, objs):
-        """Mapping from _view_of object --> view column. Returns a 
-        single item dict {column name:column value} or list of dicts."""
-        objs, is_single = tup(objs, ret_is_single=True)
-
-        columns = [{obj._id: obj._id} for obj in objs]
-
-        if len(columns) == 1:
-            return columns[0]
-        else:
-            return columns
-
-    @classmethod
-    def _column_to_obj(cls, columns):
-        """Mapping from view column --> _view_of object. Must be complement to
-        _obj_to_column()."""
-        columns, is_single = tup(columns, ret_is_single=True)
-
-        ids = [column.keys()[0] for column in columns]
-
-        if len(ids) == 1:
-            ids = ids[0]
-        return cls._view_of._byID(ids, return_dict=False)
-
-    @classmethod
-    def add_object(cls, obj, **kw):
-        """Add a lookup to the view"""
-        rowkey = cls._rowkey(obj)
-        column = cls._obj_to_column(obj)
-        cls._set_values(rowkey, column, **kw)
-
-    @classmethod
-    def query(cls, rowkeys, after=None, reverse=False, count=1000):
-        """Return a query to get objects from the underlying _view_of class."""
-
-        column_reversed = not reverse   # Reverse convention for cassandra is opposite
-
-        q = cls._query_cls(cls, rowkeys, column_count=count, 
-                           column_reversed=column_reversed,
-                           column_to_obj=cls._column_to_obj,
-                           obj_to_column=cls._obj_to_column)
-        q._after(after)
-        return q
 
     def _values(self):
         """Retrieve the entire contents of the view"""
         # TODO: at present this only grabs max_column_count columns
         return self._t
 
+    @staticmethod
+    def _gen_uuid():
+        """Convenience method for generating UUIDs for view
+           keys. Generates time-based UUIDs, safe for use as TimeUUID
+           indices in Cassandra"""
+        
+        return uuid1()
+
     @classmethod
     @will_write
     def _set_values(cls, row_key, col_values,
                     write_consistency_level = None,
                     ttl=None):
-        """Set a set of column values in a row of a view without
+        """Set a set of column values in a row of a View without
            looking up the whole row first"""
         # col_values =:= dict(col_name -> col_value)
 
@@ -1235,14 +909,16 @@ class View(ThingBase):
         # based on the _default_ttls class dict. Note! There is no way
         # to use this API to express that you don't want a TTL if
         # there is a default set on either the row or the column
-        default_ttl = ttl or cls._ttl
+        default_ttl = None if ttl is None else self._ttl
 
         with cls._cf.batch(write_consistency_level = cls._wcl(write_consistency_level)) as b:
             # with some quick tweaks we could have a version that
             # operates across multiple row keys, but this is not it
             for k, v in updates.iteritems():
-                b.insert(row_key, {k: v},
-                         ttl=cls._default_ttls.get(k, default_ttl))
+                ttl = cls._default_ttls.get(k, default_ttl)
+                b.insert(row_key,
+                         {k: v},
+                         ttl = cls._default_ttls.get(k, default_ttl))
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))

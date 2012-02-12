@@ -10,7 +10,7 @@ from pylons.i18n import _
 from validator import *
 from r2.models import *
 
-from reddit_base import RedditController
+from sciteit_base import SciteitController
 
 def get_blob(code):
     key = "payment_blob-" + code
@@ -160,7 +160,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage):
         md_sender = "[%s](/user/%s)" % (sender, sender)
     else:
         sender = "someone"
-        md_sender = "An anonymous redditor"
+        md_sender = "An anonymous sciteitor"
 
     create_gift_gold (buyer._id, recipient._id, days, c.start_time, signed)
     if months == 1:
@@ -168,7 +168,7 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage):
     else:
         amount = "%d months" % months
 
-    subject = sender + " just sent you reddit gold!"
+    subject = sender + " just sent you sciteit gold!"
     message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
 
     if giftmessage and giftmessage.strip():
@@ -218,12 +218,12 @@ def _google_checkout_post(url, params):
 
     return BeautifulStoneSoup(response)
 
-class IpnController(RedditController):
-    # Used when buying gold with creddits
+class IpnController(SciteitController):
+    # Used when buying gold with csciteits
     @validatedForm(VUser(),
                    months = VInt("months"),
                    passthrough = VPrintable("passthrough", max_length=50))
-    def POST_spendcreddits(self, form, jquery, months, passthrough):
+    def POST_spendcsciteits(self, form, jquery, months, passthrough):
         if months is None or months < 1:
             form.set_html(".status", _("nice try."))
             return
@@ -231,11 +231,11 @@ class IpnController(RedditController):
         days = months * 31
 
         if not passthrough:
-            raise ValueError("/spendcreddits got no passthrough?")
+            raise ValueError("/spendcsciteits got no passthrough?")
 
         blob_key, payment_blob = get_blob(passthrough)
         if payment_blob["goldtype"] != "gift":
-            raise ValueError("/spendcreddits payment_blob %s has goldtype %s" %
+            raise ValueError("/spendcsciteits payment_blob %s has goldtype %s" %
                              (passthrough, payment_blob["goldtype"]))
 
         signed = payment_blob["signed"]
@@ -243,7 +243,7 @@ class IpnController(RedditController):
         recipient_name = payment_blob["recipient"]
 
         if payment_blob["account_id"] != c.user._id:
-            fmt = ("/spendcreddits payment_blob %s has userid %d " +
+            fmt = ("/spendcsciteits payment_blob %s has userid %d " +
                    "but c.user._id is %d")
             raise ValueError(fmt % passthrough,
                              payment_blob["account_id"],
@@ -252,22 +252,22 @@ class IpnController(RedditController):
         try:
             recipient = Account._by_name(recipient_name)
         except NotFound:
-            raise ValueError("Invalid username %s in spendcreddits, buyer = %s"
+            raise ValueError("Invalid username %s in spendcsciteits, buyer = %s"
                              % (recipient_name, c.user.name))
 
         if not c.user_is_admin:
-            if months > c.user.gold_creddits:
-                raise ValueError("%s is trying to sneak around the creddit check"
+            if months > c.user.gold_csciteits:
+                raise ValueError("%s is trying to sneak around the csciteit check"
                                  % c.user.name)
 
-            c.user.gold_creddits -= months
-            c.user.gold_creddit_escrow += months
+            c.user.gold_csciteits -= months
+            c.user.gold_csciteit_escrow += months
             c.user._commit()
 
         send_gift(c.user, recipient, months, days, signed, giftmessage)
 
         if not c.user_is_admin:
-            c.user.gold_creddit_escrow -= months
+            c.user.gold_csciteit_escrow -= months
             c.user._commit()
 
         payment_blob["status"] = "processed"
@@ -446,17 +446,17 @@ class IpnController(RedditController):
         if payment_blob['goldtype'] in ('autorenew', 'onetime'):
             admintools.engolden(buyer, days)
 
-            subject = _("thanks for buying reddit gold!")
+            subject = _("thanks for buying sciteit gold!")
 
-            if g.lounge_reddit:
-                lounge_url = "/r/" + g.lounge_reddit
+            if g.lounge_sciteit:
+                lounge_url = "/r/" + g.lounge_sciteit
                 message = strings.lounge_msg % dict(link=lounge_url)
             else:
                 message = ":)"
-        elif payment_blob['goldtype'] == 'creddits':
-            buyer._incr("gold_creddits", months)
+        elif payment_blob['goldtype'] == 'csciteits':
+            buyer._incr("gold_csciteits", months)
             buyer._commit()
-            subject = _("thanks for buying creddits!")
+            subject = _("thanks for buying csciteits!")
             message = _("To spend them, visit [/gold](/gold) or your favorite person's userpage.")
         elif payment_blob['goldtype'] == 'gift':
             recipient_name = payment_blob.get('recipient', None)
@@ -470,7 +470,7 @@ class IpnController(RedditController):
             giftmessage = payment_blob.get("giftmessage", False)
             send_gift(buyer, recipient, months, days, signed, giftmessage)
             instagift = True
-            subject = _("thanks for giving reddit gold!")
+            subject = _("thanks for giving sciteit gold!")
             message = _("Your gift to %s has been delivered." % recipient.name)
         else:
             dump_parameters(parameters)

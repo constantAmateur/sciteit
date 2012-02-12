@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 """
-    Module for reddit-level communication with IndexTank
+    Module for sciteit-level communication with IndexTank
 """
 
 from pylons import g, config
@@ -93,9 +93,9 @@ class IndextankQuery(object):
             pass
         #elif isinstance(self.sr, DefaultSR):
         #    q.append(self._req_fs(
-        #            Subreddit.user_subreddits(c.user,over18=c.over18,
+        #            Subsciteit.user_subsciteits(c.user,over18=c.over18,
         #                                      ids=True, limit=None)))
-        elif isinstance(self.sr, MultiReddit):
+        elif isinstance(self.sr, MultiSciteit):
             q.append(self._req_fs(
                     self.sr.sr_ids))
         elif isinstance(self.sr, DomainSR):
@@ -113,7 +113,7 @@ class IndextankQuery(object):
         elif isinstance(self.sr, ModContribSR):
             q.append(self._req_fs(
                     self.sr.sr_ids()))
-        elif not isinstance(self.sr, FakeSubreddit):
+        elif not isinstance(self.sr, FakeSubsciteit):
             q.append(self._req_fs([self.sr._id]))
 
         query = ' '.join(q)
@@ -155,14 +155,15 @@ def maps_from_things(things, boost_only = False):
 
         sr_ids = [thing.sr_id for thing in things
                   if hasattr(thing, 'sr_id')]
-        srs = Subreddit._byID(sr_ids, data=True, return_dict=True)
+        srs = Subsciteit._byID(sr_ids, data=True, return_dict=True)
 
     for thing in things:
         try:
             d = dict(fullname = thing._fullname,
                      ups = thing._ups,
                      downs = thing._downs,
-                     num_comments = getattr(thing, 'num_comments', 0))
+                     num_comments = getattr(thing, 'num_comments', 0),
+		     num_criticisms = getattr(thing, 'num_criticisms',0))
 
             if not boost_only:
                 a = accounts[thing.author_id]
@@ -174,8 +175,8 @@ def maps_from_things(things, boost_only = False):
                     continue
 
                 d.update(dict(fullname = thing._fullname,
-                              subreddit = sr.name,
-                              reddit = sr.name,
+                              subsciteit = sr.name,
+                              sciteit = sr.name,
                               text = ' '.join([thing.title, a.name, sr.name]),
                               author = a.name,
                               timestamp = thing._date.strftime("%s"),
@@ -198,7 +199,8 @@ def maps_from_things(things, boost_only = False):
 def to_variables(ups, downs, num_comments):
     return {0: ups,
             1: downs,
-            2: num_comments}
+            2: num_comments,
+	    3: num_criticisms}
 
 def inject_maps(maps, boost_only=False):
     for d in maps:
@@ -206,7 +208,8 @@ def inject_maps(maps, boost_only=False):
         ups = d.pop("ups")
         downs = d.pop("downs")
         num_comments = d.pop("num_comments")
-        boosts = to_variables(ups, downs, num_comments)
+        num_criticisms = d.pop("num_criticisms")
+        boosts = to_variables(ups, downs, num_comments,num_criticisms)
 
         if boost_only:
             index.update_variables(docid=fullname, variables=boosts)

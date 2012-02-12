@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -163,16 +163,16 @@ class ThingJsonTemplate(JsonTemplate):
         if attr == "author":
             return thing.author.name
         if attr == "author_flair_text":
-            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
+            if thing.author.flair_enabled_in_sr(thing.subsciteit._id):
                 return getattr(thing.author,
-                               'flair_%s_text' % (thing.subreddit._id),
+                               'flair_%s_text' % (thing.subsciteit._id),
                                None)
             else:
                 return None
         if attr == "author_flair_css_class":
-            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
+            if thing.author.flair_enabled_in_sr(thing.subsciteit._id):
                 return getattr(thing.author,
-                               'flair_%s_css_class' % (thing.subreddit._id),
+                               'flair_%s_css_class' % (thing.subsciteit._id),
                                None)
             else:
                 return None
@@ -195,7 +195,7 @@ class ThingJsonTemplate(JsonTemplate):
         return ObjectTemplate(dict(kind = self.kind(thing),
                                    data = self.data(thing)))
 
-class SubredditJsonTemplate(ThingJsonTemplate):
+class SubsciteitJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "_ups",
                                                 title        = "title",
                                                 url          = "path",
@@ -205,8 +205,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
 
     def thing_attr(self, thing, attr):
         # Don't reveal revenue information via /r/lounge's subscribers
-        if (attr == "_ups" and g.lounge_reddit
-            and thing.name == g.lounge_reddit):
+        if (attr == "_ups" and g.lounge_sciteit
+            and thing.name == g.lounge_sciteit):
             return 0
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
@@ -225,7 +225,7 @@ class AccountJsonTemplate(IdentityJsonTemplate):
                                                   )
 
     def thing_attr(self, thing, attr):
-        from r2.models import Subreddit
+        from r2.models import Subsciteit
         if attr == "has_mail":
             if c.user_is_loggedin and thing._id == c.user._id:
                 return bool(c.have_messages)
@@ -235,7 +235,7 @@ class AccountJsonTemplate(IdentityJsonTemplate):
                 return bool(c.have_mod_messages)
             return None
         if attr == "is_mod":
-            return bool(Subreddit.reverse_moderator_ids(thing))
+            return bool(Subsciteit.reverse_moderator_ids(thing))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):
@@ -267,10 +267,12 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 selftext     = "selftext",
                                                 selftext_html= "selftext_html",
                                                 num_comments = "num_comments",
-                                                subreddit    = "subreddit",
-                                                subreddit_id = "subreddit_id",
+                                                num_criticisms = "num_criticisms",
+                                                subsciteit    = "subsciteit",
+                                                subsciteit_id = "subsciteit_id",
                                                 is_self      = "is_self", 
                                                 permalink    = "permalink",
+                                                levenshtein  = "levenshtein",
                                                 )
 
     def thing_attr(self, thing, attr):
@@ -285,10 +287,10 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                height = media_embed.height,
                                content = media_embed.content)
            return dict()
-        elif attr == 'subreddit':
-            return thing.subreddit.name
-        elif attr == 'subreddit_id':
-            return thing.subreddit._fullname
+        elif attr == 'subsciteit':
+            return thing.subsciteit.name
+        elif attr == 'subsciteit_id':
+            return thing.subsciteit._fullname
         elif attr == 'selftext':
             if not thing.expunged:
                 return thing.selftext
@@ -303,7 +305,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
     def rendered_data(self, thing):
         d = ThingJsonTemplate.rendered_data(self, thing)
-        d['sr'] = thing.subreddit._fullname
+        d['sr'] = thing.subsciteit._fullname
         return d
 
 
@@ -324,19 +326,20 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 author_flair_css_class =
                                                     "author_flair_css_class",
                                                 link_id      = "link_id",
-                                                subreddit    = "subreddit",
-                                                subreddit_id = "subreddit_id",
+                                                subsciteit    = "subsciteit",
+                                                subsciteit_id = "subsciteit_id",
                                                 parent_id    = "parent_id",
+                                                levenshtein  = "levenshtein",
                                                 )
 
     def thing_attr(self, thing, attr):
-        from r2.models import Comment, Link, Subreddit
+        from r2.models import Comment, Link, Subsciteit
         if attr == 'link_id':
             return make_fullname(Link, thing.link_id)
-        elif attr == 'subreddit':
-            return thing.subreddit.name
-        elif attr == 'subreddit_id':
-            return thing.subreddit._fullname
+        elif attr == 'subsciteit':
+            return thing.subsciteit.name
+        elif attr == 'subsciteit_id':
+            return thing.subsciteit._fullname
         elif attr == "parent_id":
             if getattr(thing, "parent_id", None):
                 return make_fullname(Comment, thing.parent_id)
@@ -367,15 +370,11 @@ class CommentJsonTemplate(ThingJsonTemplate):
 
 class MoreCommentJsonTemplate(CommentJsonTemplate):
     _data_attrs_ = dict(id           = "_id36",
-                        name         = "_fullname",
-                        children     = "children")
-
+                        name         = "_fullname")
     def kind(self, wrapped):
         return "more"
 
     def thing_attr(self, thing, attr):
-        if attr == 'children':
-            return [to36(x) for x in thing.children]
         if attr in ('body', 'body_html'):
             return ""
         return CommentJsonTemplate.thing_attr(self, thing, attr)
@@ -391,7 +390,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
                                                 body_html    = "body_html",
                                                 author       = "author",
                                                 dest         = "dest",
-                                                subreddit = "subreddit",
+                                                subsciteit = "subsciteit",
                                                 was_comment  = "was_comment",
                                                 context      = "context", 
                                                 created      = "created",
@@ -408,10 +407,10 @@ class MessageJsonTemplate(ThingJsonTemplate):
             if thing.to_id:
                 return thing.to.name
             else:
-                return "#" + thing.subreddit.name
-        elif attr == "subreddit":
+                return "#" + thing.subsciteit.name
+        elif attr == "subsciteit":
             if thing.sr_id:
-                return thing.subreddit.name
+                return thing.subsciteit.name
             return None
         elif attr == "body_html":
             return safemarkdown(thing.body)
@@ -429,7 +428,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
         return d
 
 
-class RedditJsonTemplate(JsonTemplate):
+class SciteitJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
         return ObjectTemplate(thing.content().render() if thing else {})
 

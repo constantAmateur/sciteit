@@ -1,24 +1,24 @@
-<%namespace file="reddit.html" import="javascript"/>
+<%namespace file="sciteit.html" import="javascript"/>
 <%namespace file="utils.html" import="js_setup"/>
 
 <html>
   <head>
     <title>escappit</title>
     <% from r2.lib import js %>
-    ${unsafe(js.use('jquery', 'reddit'))}
+    ${unsafe(js.use('jquery', 'sciteit'))}
     ${js_setup()}
   </head>
   <body>
     <script type="text/javascript">
-      $.cookie_write({name: "reddit_first", data: {firsttime: true},
+      $.cookie_write({name: "sciteit_first", data: {firsttime: true},
                       domain: "${c.site.domain}" });
       %if thing.login:
-        $.cookie_write({name: "redditSession", data: "cname",
+        $.cookie_write({name: "sciteitSession", data: "cname",
                         domain: "${c.site.domain}" });
         if(parent.$ && parent.$.framebuster) 
            parent.$.framebuster();
       %else:
-        $.cookie_write({name: "redditSession", data: "",
+        $.cookie_write({name: "sciteitSession", data: "",
                         domain: "${c.site.domain}"});
       %endif
     </script>
@@ -46,8 +46,8 @@
              });
          }
       })(jQuery);
-      document.write('<iframe name="reddit-window" id="reddit-window"' +
-       'src="http://${get_domain(cname=False, subreddit=True)}/framebuster/'
+      document.write('<iframe name="sciteit-window" id="sciteit-window"' +
+       'src="http://${get_domain(cname=False, subsciteit=True)}/framebuster/'
        + Math.random() + 
        '" width="1" height="1" style="visibility: hidden"></iframe>');
     </script>

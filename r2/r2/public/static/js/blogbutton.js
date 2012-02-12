@@ -1,5 +1,5 @@
 $(function() {
-        reddit.external_frame = true;
+        sciteit.external_frame = true;
 
         /* set default arrow behavior */
         var state = null;
@@ -26,7 +26,7 @@ $(function() {
             }
         }
         function submit_url(url, sr, title) {
-            var submit = "http://www.reddit.com";
+            var submit = "http://www.sciteit.com";
             if (sr) {
                 submit += "/r/" + sr;
             }
@@ -74,8 +74,8 @@ $(function() {
 	    try {
             var modhash = res.data.modhash;
             if (modhash) {
-                reddit.logged = true;
-                reddit.modhash = modhash;
+                sciteit.logged = true;
+                sciteit.modhash = modhash;
             }
             var data = res.data.children[0].data;
             var realstate = 0; 
@@ -87,7 +87,7 @@ $(function() {
             };
             /* add the thing's id */
             $(".thing").addClass("id-" + data.name);
-            $(".bling a, a.bling").attr("href", "http://www.reddit.com"+data.permalink);
+            $(".bling a, a.bling").attr("href", "http://www.sciteit.com"+data.permalink);
             if(data.likes) {
                 real_state = 1;
                 transition_score(function() {
@@ -114,7 +114,7 @@ $(function() {
             $(".arrow").unbind("click").click(function() {
                     $(this).vote('', set_score, true);
                 });
-            if(reddit.logged && state != real_state) {
+            if(sciteit.logged && state != real_state) {
                 if(state != null) {
                     $.request("vote", {id: data.name, dir : state});
                 }
@@ -155,16 +155,16 @@ $(function() {
             error: make_submit
         };
 
-        var infoTarget = "/button_info.json";
+        var target = "/button_info.json";
         if (querydict.sr) {
-            infoTarget = "/r/" + querydict.sr + infoTarget;
+            target = "/r/" + querydict.sr + target;
         }
 
-        if ($.cookie_read("session", "reddit_").data) {
-            options.url = infoTarget;
+        if ($.cookie_read("session", "sciteit_").data) {
+            options.url = target;
             options.dataType = "json";
         } else {
-            options.url = "http://buttons.reddit.com" + infoTarget;
+            options.url = "http://buttons.sciteit.com" + target;
             options.dataType = options.jsonp = "jsonp";
             options.jsonpCallback = "buttonInfoCb";
             options.cache = true;

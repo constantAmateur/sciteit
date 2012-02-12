@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd /home/sciteit/sciteit/r2
+exec 2>&1
+exec setuidgid sciteit /usr/local/bin/paster serve run.ini http_port=8001

@@ -1,4 +1,4 @@
 #!/bin/sh
 
 umask 0027
-exec setuidgid reddit multilog ./main
+exec setuidgid sciteit multilog ./main

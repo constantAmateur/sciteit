@@ -24,11 +24,11 @@
               style="text-decoration:none; font-size:larger">${l.title}</a><br/>
            <span style="color:gray; cont-size:smaller;">
              ${l.score} points submitted 
-             by&#32;<a href="http://www.reddit.com/user/${l.author.name}"
+             by&#32;<a href="http://www.sciteit.com/user/${l.author.name}"
                        style="text-decoration:none">${l.author.name}</a>
            </span><br/>
            <span style="cont-size:smaller;">
-             <a class="permalink" href="http://www.reddit.com${l.permalink}">permalink</a>&#32;(<b>${l.ncampaigns}</b> campaign(s) for <b>$${l.bid}</b>)
+             <a class="permalink" href="http://www.sciteit.com${l.permalink}">permalink</a>&#32;(<b>${l.ncampaigns}</b> campaign(s) for <b>$${l.bid}</b>)
            </span>
          </li>
      %endif

@@ -1,11 +1,11 @@
-from reddit_base import RedditController
+from sciteit_base import SciteitController
 from validator import *
 from r2.lib.db.queries import CachedResults
 
 import cPickle as pickle
 from urllib import unquote
 
-class QueryController(RedditController):
+class QueryController(SciteitController):
     @validate(query = nop('query'))
     def POST_doquery(self, query):
         if g.enable_doquery:

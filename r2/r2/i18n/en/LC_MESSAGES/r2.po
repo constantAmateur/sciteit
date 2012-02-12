@@ -57,12 +57,12 @@ msgid "see? you don't really want to leave"
 msgstr "see? you don't really want to leave"
 
 #: r2/controllers/buttons.py:76
-msgid "reddit buttons"
-msgstr "reddit buttons"
+msgid "sciteit buttons"
+msgstr "sciteit buttons"
 
 #: r2/controllers/buttons.py:82
-msgid "reddit widget"
-msgstr "reddit widget"
+msgid "sciteit widget"
+msgstr "sciteit widget"
 
 #: r2/controllers/buttons.py:88 r2/lib/menus.py:71
 msgid "bookmarklets"
@@ -79,8 +79,8 @@ msgid "forbidden (%(domain)s)"
 msgstr "forbidden (%(domain)s)"
 
 #: r2/controllers/error.py:88
-msgid "this reddit has been banned."
-msgstr "this reddit has been banned."
+msgid "this sciteit has been banned."
+msgstr "this sciteit has been banned."
 
 #: r2/controllers/error.py:96
 msgid "page not found"
@@ -175,8 +175,8 @@ msgid "that link has already been submitted"
 msgstr "that link has already been submitted"
 
 #: r2/controllers/errors.py:32
-msgid "that subreddit already exists"
-msgstr "that subreddit already exists"
+msgid "that subsciteit already exists"
+msgstr "that subsciteit already exists"
 
 #: r2/controllers/errors.py:33
 msgid "that name isn't going to work"
@@ -204,8 +204,8 @@ msgid "description is too long"
 msgstr "description is too long"
 
 #: r2/controllers/feedback.py:10
-msgid "inquire about advertising on reddit"
-msgstr "inquire about advertising on reddit"
+msgid "inquire about advertising on sciteit"
+msgstr "inquire about advertising on sciteit"
 
 #: r2/controllers/feedback.py:17 r2/lib/menus.py:75
 msgid "advertise"
@@ -259,9 +259,9 @@ msgid "profile for %(user)s"
 msgstr "profile for %(user)s"
 
 #: r2/controllers/front.py:235 r2/controllers/front.py:237
-#: r2/templates/createsubreddit.html:40
-msgid "create a reddit"
-msgstr "create a reddit"
+#: r2/templates/createsubsciteit.html:40
+msgid "create a sciteit"
+msgstr "create a sciteit"
 
 #: r2/controllers/front.py:277 r2/lib/menus.py:63
 msgid "stats"
@@ -292,17 +292,17 @@ msgstr "most controversial links"
 msgid "recommended for you"
 msgstr "recommended for you"
 
-#: r2/controllers/listingcontroller.py:307 r2/templates/redditheader.html:31
+#: r2/controllers/listingcontroller.py:307 r2/templates/sciteitheader.html:31
 msgid "messages"
 msgstr "messages"
 
 #: r2/controllers/listingcontroller.py:366 r2/templates/pagenamenav.html:9
-msgid "reddits"
-msgstr "reddits"
+msgid "sciteits"
+msgstr "sciteits"
 
 #: r2/controllers/listingcontroller.py:401
-msgid "reddits: "
-msgstr "reddits: "
+msgid "sciteits: "
+msgstr "sciteits: "
 
 #: r2/controllers/post.py:81
 msgid "over 18?"
@@ -357,7 +357,7 @@ msgstr "top"
 msgid "rank"
 msgstr "rank"
 
-#: r2/lib/menus.py:39 r2/templates/subredditbox.html:40
+#: r2/lib/menus.py:39 r2/templates/subsciteitbox.html:40
 msgid "more"
 msgstr "more"
 
@@ -506,13 +506,13 @@ msgid "popular"
 msgstr "popular"
 
 #: r2/lib/menus.py:99 r2/lib/pages/pages.py:566
-#: r2/templates/admintranslations.html:11 r2/templates/createsubreddit.html:226
+#: r2/templates/admintranslations.html:11 r2/templates/createsubsciteit.html:226
 msgid "create"
 msgstr "create"
 
 #: r2/lib/menus.py:100
-msgid "my reddits"
-msgstr "my reddits"
+msgid "my sciteits"
+msgstr "my sciteits"
 
 #: r2/lib/menus.py:102
 msgid "translate site"
@@ -595,9 +595,9 @@ msgstr "%(num)d %(persons)s"
 
 #: r2/lib/strings.py:35
 msgid ""
-"reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"
+"sciteit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"
 msgstr ""
-"reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"
+"sciteit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"
 
 #: r2/lib/strings.py:37
 #, python-format
@@ -609,9 +609,9 @@ msgstr ""
 #: r2/lib/strings.py:39
 #, python-format
 msgid ""
-"that link has been submitted to multiple reddits. you can try to [submit it again](%s)."
+"that link has been submitted to multiple sciteits. you can try to [submit it again](%s)."
 msgstr ""
-"that link has been submitted to multiple reddits. you can try to [submit it again](%s)."
+"that link has been submitted to multiple sciteits. you can try to [submit it again](%s)."
 
 #: r2/lib/strings.py:41
 msgid ""
@@ -637,9 +637,9 @@ msgstr ""
 #: r2/lib/strings.py:48
 #, python-format
 msgid ""
-"to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)"
+"to view sciteit with only submissions from your friends, use [sciteit.com/r/friends](%s)"
 msgstr ""
-"to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)"
+"to view sciteit with only submissions from your friends, use [sciteit.com/r/friends](%s)"
 
 #: r2/lib/strings.py:52
 #, python-format
@@ -671,24 +671,24 @@ msgid "you've been banned"
 msgstr "you've been banned"
 
 #: r2/lib/strings.py:65
-msgid "you have not subscribed to any reddits."
-msgstr "you have not subscribed to any reddits."
+msgid "you have not subscribed to any sciteits."
+msgstr "you have not subscribed to any sciteits."
 
 #: r2/lib/strings.py:66
-msgid "below are the reddits you have subscribed to"
-msgstr "below are the reddits you have subscribed to"
+msgid "below are the sciteits you have subscribed to"
+msgstr "below are the sciteits you have subscribed to"
 
 #: r2/lib/strings.py:67
-msgid "below are the reddits that you have contributor access to."
-msgstr "below are the reddits that you have contributor access to."
+msgid "below are the sciteits that you have contributor access to."
+msgstr "below are the sciteits that you have contributor access to."
 
 #: r2/lib/strings.py:68
-msgid "below are the reddits that you have moderator access to."
-msgstr "below are the reddits that you have moderator access to."
+msgid "below are the sciteits that you have moderator access to."
+msgstr "below are the sciteits that you have moderator access to."
 
 #: r2/lib/strings.py:71
-msgid "click the checkbox next to a reddit to subscribe"
-msgstr "click the checkbox next to a reddit to subscribe"
+msgid "click the checkbox next to a sciteit to subscribe"
+msgstr "click the checkbox next to a sciteit to subscribe"
 
 #: r2/lib/strings.py:131 r2/lib/strings.py:136 r2/templates/frametoolbar.html:71
 #: r2/templates/link.html:114 r2/templates/link.htmllite:12
@@ -719,12 +719,12 @@ msgstr[0] "message"
 msgstr[1] "messages"
 
 #: r2/lib/strings.py:138 r2/templates/newlink.html:40
-msgid "subreddit"
-msgid_plural "subreddits"
-msgstr[0] "subreddit"
-msgstr[1] "subreddits"
+msgid "subsciteit"
+msgid_plural "subsciteits"
+msgstr[0] "subsciteit"
+msgstr[1] "subsciteits"
 
-#: r2/lib/strings.py:141 r2/templates/subredditinfobar.html:34
+#: r2/lib/strings.py:141 r2/templates/subsciteitinfobar.html:34
 msgid "subscriber"
 msgid_plural "subscribers"
 msgstr[0] "subscriber"
@@ -795,16 +795,16 @@ msgstr ""
 "to anything interesting: news article, blog entry, video, picture..."
 
 #: r2/lib/pages/pages.py:97
-msgid "Create your own reddit"
-msgstr "Create your own reddit"
+msgid "Create your own sciteit"
+msgstr "Create your own sciteit"
 
 #: r2/lib/pages/pages.py:312
 msgid "login or register"
 msgstr "login or register"
 
-#: r2/lib/pages/pages.py:405 r2/templates/createsubreddit.html:34
-msgid "manage your reddit"
-msgstr "manage your reddit"
+#: r2/lib/pages/pages.py:405 r2/templates/createsubsciteit.html:34
+msgid "manage your sciteit"
+msgstr "manage your sciteit"
 
 #: r2/lib/pages/pages.py:406
 #, python-format
@@ -812,24 +812,24 @@ msgid "about %(site)s"
 msgstr "about %(site)s"
 
 #: r2/lib/pages/pages.py:430
-msgid "search reddits"
-msgstr "search reddits"
+msgid "search sciteits"
+msgstr "search sciteits"
 
 #: r2/lib/pages/pages.py:538
 msgid "you aren't allowed to do that."
 msgstr "you aren't allowed to do that."
 
 #: r2/lib/pages/pages.py:560
-msgid "Customize your reddit"
-msgstr "Customize your reddit"
+msgid "Customize your sciteit"
+msgstr "Customize your sciteit"
 
 #: r2/lib/pages/pages.py:561
 msgid "Select which communities you want to see"
 msgstr "Select which communities you want to see"
 
 #: r2/lib/pages/pages.py:563
-msgid "Other reddit communities"
-msgstr "Other reddit communities"
+msgid "Other sciteit communities"
+msgstr "Other sciteit communities"
 
 #: r2/lib/pages/pages.py:630
 msgid "try entering those letters again"
@@ -873,9 +873,9 @@ msgstr[1] "milliseconds"
 msgid "ago"
 msgstr "ago"
 
-#: r2/models/subreddit.py:333
-msgid "reddit.com: what's new online!"
-msgstr "reddit.com: what's new online!"
+#: r2/models/subsciteit.py:333
+msgid "sciteit.com: what's new online!"
+msgstr "sciteit.com: what's new online!"
 
 #: r2/templates/admintranslations.html:40
 msgid "disable"
@@ -913,9 +913,9 @@ msgstr "install the %(site)s bookmarklet set"
 
 #: r2/templates/bookmarklets.html:10
 msgid ""
-"once added to your toolbar, these buttons will let you \"reddit this\" (submit the link, or if it's already been submitted, share it and/or comment on it), like, dislike, and save links while you surf."
+"once added to your toolbar, these buttons will let you \"sciteit this\" (submit the link, or if it's already been submitted, share it and/or comment on it), like, dislike, and save links while you surf."
 msgstr ""
-"once added to your toolbar, these buttons will let you \"reddit this\" (submit the link, or if it's already been submitted, share it and/or comment on it), like, dislike, and save links while you surf."
+"once added to your toolbar, these buttons will let you \"sciteit this\" (submit the link, or if it's already been submitted, share it and/or comment on it), like, dislike, and save links while you surf."
 
 #: r2/templates/bookmarklets.html:11
 msgid "in Firefox"
@@ -965,21 +965,21 @@ msgstr ""
 
 #: r2/templates/buttondemopanel.html:23
 msgid ""
-"if the site has not been submitted yet, clicking on the button      will take the user to a reddit submit page, otherwise it takes      them to the comments page."
+"if the site has not been submitted yet, clicking on the button      will take the user to a sciteit submit page, otherwise it takes      them to the comments page."
 msgstr ""
-"if the site has not been submitted yet, clicking on the button      will take the user to a reddit submit page, otherwise it takes      them to the comments page."
+"if the site has not been submitted yet, clicking on the button      will take the user to a sciteit submit page, otherwise it takes      them to the comments page."
 
 #: r2/templates/buttondemopanel.html:27
 msgid ""
-"if you want to specify the URL that should be submitted to      reddit, include the reddit_url line.  if you don't include that      line, then the current page's URL will be used."
+"if you want to specify the URL that should be submitted to      sciteit, include the sciteit_url line.  if you don't include that      line, then the current page's URL will be used."
 msgstr ""
-"if you want to specify the URL that should be submitted to      reddit, include the reddit_url line.  if you don't include that      line, then the current page's URL will be used."
+"if you want to specify the URL that should be submitted to      sciteit, include the sciteit_url line.  if you don't include that      line, then the current page's URL will be used."
 
 #: r2/templates/buttondemopanel.html:31
 msgid ""
-"if you want to specify the title that should be submitted to      reddit, include the reddit_title line.  if you don't include that      line, then the user will have to specify a title when they      submit."
+"if you want to specify the title that should be submitted to      sciteit, include the sciteit_title line.  if you don't include that      line, then the user will have to specify a title when they      submit."
 msgstr ""
-"if you want to specify the title that should be submitted to      reddit, include the reddit_title line.  if you don't include that      line, then the user will have to specify a title when they      submit."
+"if you want to specify the title that should be submitted to      sciteit, include the sciteit_title line.  if you don't include that      line, then the user will have to specify a title when they      submit."
 
 #: r2/templates/buttondemopanel.html:42
 #, python-format
@@ -1037,6 +1037,11 @@ msgstr "on"
 msgid "comment {verb}"
 msgstr "comment"
 
+#: r2/templates/commentreplybox.html:26 r2/templates/frametoolbar.html:68
+#: r2/templates/link.html:111
+msgid "criticism {verb}"
+msgstr "criticism"
+
 #: r2/templates/commentreplybox.html:33
 msgid "cancel"
 msgstr "cancel"
@@ -1075,91 +1080,91 @@ msgstr "item"
 msgid "quoted text"
 msgstr "quoted text"
 
-#: r2/templates/createsubreddit.html:38
-msgid "that subreddit doesn't exist, but you can create it here."
-msgstr "that subreddit doesn't exist, but you can create it here."
+#: r2/templates/createsubsciteit.html:38
+msgid "that subsciteit doesn't exist, but you can create it here."
+msgstr "that subsciteit doesn't exist, but you can create it here."
 
-#: r2/templates/createsubreddit.html:51
+#: r2/templates/createsubsciteit.html:51
 msgid "name"
 msgstr "name"
 
-#: r2/templates/createsubreddit.html:67
+#: r2/templates/createsubsciteit.html:67
 msgid "no spaces, e.g. slashdot"
 msgstr "no spaces, e.g. slashdot"
 
-#: r2/templates/createsubreddit.html:74 r2/templates/newlink.html:29
+#: r2/templates/createsubsciteit.html:74 r2/templates/newlink.html:29
 msgid "title"
 msgstr "title"
 
-#: r2/templates/createsubreddit.html:89
+#: r2/templates/createsubsciteit.html:89
 msgid "e.g. slashdot: news for nerds, stuff that matters"
 msgstr "e.g. slashdot: news for nerds, stuff that matters"
 
-#: r2/templates/createsubreddit.html:96
+#: r2/templates/createsubsciteit.html:96
 msgid "description"
 msgstr "description"
 
-#: r2/templates/createsubreddit.html:113
+#: r2/templates/createsubsciteit.html:113
 msgid "first text"
 msgstr "first text"
 
-#: r2/templates/createsubreddit.html:127
+#: r2/templates/createsubsciteit.html:127
 msgid "static directory"
 msgstr "static directory"
 
-#: r2/templates/createsubreddit.html:141
+#: r2/templates/createsubsciteit.html:141
 msgid "headerfile"
 msgstr "headerfile"
 
-#: r2/templates/createsubreddit.html:155
+#: r2/templates/createsubsciteit.html:155
 msgid "style sheet"
 msgstr "style sheet"
 
-#: r2/templates/createsubreddit.html:169
+#: r2/templates/createsubsciteit.html:169
 msgid "ad file"
 msgstr "ad file"
 
-#: r2/templates/createsubreddit.html:184
+#: r2/templates/createsubsciteit.html:184
 msgid "language"
 msgstr "language"
 
-#: r2/templates/createsubreddit.html:198
+#: r2/templates/createsubsciteit.html:198
 msgid "type"
 msgstr "type"
 
-#: r2/templates/createsubreddit.html:202
+#: r2/templates/createsubsciteit.html:202
 msgid "public"
 msgstr "public"
 
-#: r2/templates/createsubreddit.html:202
+#: r2/templates/createsubsciteit.html:202
 msgid "anyone can view and submit"
 msgstr "anyone can view and submit"
 
-#: r2/templates/createsubreddit.html:203
+#: r2/templates/createsubsciteit.html:203
 msgid "restricted"
 msgstr "restricted"
 
-#: r2/templates/createsubreddit.html:203
+#: r2/templates/createsubsciteit.html:203
 msgid "anyone can view, but only contributors can submit"
 msgstr "anyone can view, but only contributors can submit"
 
-#: r2/templates/createsubreddit.html:204
+#: r2/templates/createsubsciteit.html:204
 msgid "private"
 msgstr "private"
 
-#: r2/templates/createsubreddit.html:204
+#: r2/templates/createsubsciteit.html:204
 msgid "only contributors can view and submit"
 msgstr "only contributors can view and submit"
 
-#: r2/templates/createsubreddit.html:211
+#: r2/templates/createsubsciteit.html:211
 msgid "age"
 msgstr "age"
 
-#: r2/templates/createsubreddit.html:215
+#: r2/templates/createsubsciteit.html:215
 msgid "viewers must be over eighteen years old"
 msgstr "viewers must be over eighteen years old"
 
-#: r2/templates/createsubreddit.html:224
+#: r2/templates/createsubsciteit.html:224
 msgid "update"
 msgstr "update"
 
@@ -1218,7 +1223,7 @@ msgstr "save"
 msgid "login"
 msgstr "login"
 
-#: r2/templates/frametoolbar.html:112 r2/templates/redditheader.html:13
+#: r2/templates/frametoolbar.html:112 r2/templates/sciteitheader.html:13
 msgid "register"
 msgstr "register"
 
@@ -1241,12 +1246,12 @@ msgid "are you sure?"
 msgstr "are you sure?"
 
 #: r2/templates/help.html:18 r2/templates/prefdelete.html:5
-#: r2/templates/printable.html:225 r2/templates/subredditinfobar.html:69
+#: r2/templates/printable.html:225 r2/templates/subsciteitinfobar.html:69
 msgid "yes"
 msgstr "yes"
 
 #: r2/templates/help.html:18 r2/templates/prefdelete.html:5
-#: r2/templates/printable.html:225 r2/templates/subredditinfobar.html:69
+#: r2/templates/printable.html:225 r2/templates/subsciteitinfobar.html:69
 msgid "no"
 msgstr "no"
 
@@ -1263,8 +1268,8 @@ msgstr ""
 
 #: r2/templates/link.html:92
 #, python-format
-msgid "submitted %(when)s ago by %(author)s to %(reddit)s"
-msgstr "submitted %(when)s ago by %(author)s to %(reddit)s"
+msgid "submitted %(when)s ago by %(author)s to %(sciteit)s"
+msgstr "submitted %(when)s ago by %(author)s to %(sciteit)s"
 
 #: r2/templates/link.html:94
 #, python-format
@@ -1447,12 +1452,12 @@ msgstr "enter a title, or click submit to find one automatically."
 
 #: r2/templates/newlink.html:82
 #, python-format
-msgid "use reddit from your toolbar with the %(bookmarklets)s"
-msgstr "use reddit from your toolbar with the %(bookmarklets)s"
+msgid "use sciteit from your toolbar with the %(bookmarklets)s"
+msgstr "use sciteit from your toolbar with the %(bookmarklets)s"
 
 #: r2/templates/newlink.html:83
-msgid "reddit bookmarklets"
-msgstr "reddit bookmarklets"
+msgid "sciteit bookmarklets"
+msgstr "sciteit bookmarklets"
 
 #: r2/templates/organiclisting.html:23
 msgid ""
@@ -1461,8 +1466,8 @@ msgstr ""
 "This area shows new and upcoming links. Vote on links here to help them become popular, and click the forwards and backwards buttons to view more. "
 
 #: r2/templates/over18.html:3
-msgid "you must be at least eighteen to view this reddit"
-msgstr "you must be at least eighteen to view this reddit"
+msgid "you must be at least eighteen to view this sciteit"
+msgstr "you must be at least eighteen to view this sciteit"
 
 #: r2/templates/over18.html:10
 msgid "are you over eighteen and willing to see adult content?"
@@ -1493,8 +1498,8 @@ msgid "see the above comments"
 msgstr "see the above comments"
 
 #: r2/templates/prefdelete.html:15
-msgid "delete your reddit account? hope you have a good reason."
-msgstr "delete your reddit account? hope you have a good reason."
+msgid "delete your sciteit account? hope you have a good reason."
+msgstr "delete your sciteit account? hope you have a good reason."
 
 #: r2/templates/prefdelete.html:18
 msgid "deleting..."
@@ -1525,8 +1530,8 @@ msgid "clicking options"
 msgstr "clicking options"
 
 #: r2/templates/prefoptions.html:54
-msgid "display links with a reddit toolbar"
-msgstr "display links with a reddit toolbar"
+msgid "display links with a sciteit toolbar"
+msgstr "display links with a sciteit toolbar"
 
 #: r2/templates/prefoptions.html:56
 msgid "open links in a new window"
@@ -1619,8 +1624,8 @@ msgstr ""
 "i am over eighteen years old and willing to view adult content"
 
 #: r2/templates/prefoptions.html:116
-msgid "required to view some reddits"
-msgstr "required to view some reddits"
+msgid "required to view some sciteits"
+msgstr "required to view some sciteits"
 
 #: r2/templates/prefoptions.html:122
 msgid "save options"
@@ -1683,47 +1688,47 @@ msgstr "add to friends"
 msgid "remove from friends"
 msgstr "remove from friends"
 
-#: r2/templates/reddit.html:72
+#: r2/templates/sciteit.html:72
 msgid "fetching title..."
 msgstr "fetching title..."
 
-#: r2/templates/reddit.html:73
+#: r2/templates/sciteit.html:73
 msgid "submitting..."
 msgstr "submitting..."
 
-#: r2/templates/reddit.html:74
+#: r2/templates/sciteit.html:74
 msgid "loading..."
 msgstr "loading..."
 
-#: r2/templates/redditfooter.html:19
+#: r2/templates/sciteitfooter.html:19
 #, python-format
 msgid ""
 "Use of this site constitutes acceptance of our %(user_agreement)s and %(privacy_policy)s"
 msgstr ""
 "Use of this site constitutes acceptance of our %(user_agreement)s and %(privacy_policy)s"
 
-#: r2/templates/redditfooter.html:19
+#: r2/templates/sciteitfooter.html:19
 msgid "User Agreement {Genitive}"
 msgstr "User Agreement"
 
-#: r2/templates/redditfooter.html:19
+#: r2/templates/sciteitfooter.html:19
 msgid "Privacy Policy {Genitive}"
 msgstr "Privacy Policy"
 
-#: r2/templates/redditfooter.html:20
+#: r2/templates/sciteitfooter.html:20
 msgid "(c) 2008 CondeNet, Inc. All rights reserved."
 msgstr "(c) 2008 CondeNet, Inc. All rights reserved."
 
-#: r2/templates/redditfooter.html:21
+#: r2/templates/sciteitfooter.html:21
 #, python-format
 msgid "(c) %(year)d CondeNet, Inc. All rights reserved."
 msgstr "(c) %(year)d CondeNet, Inc. All rights reserved."
 
-#: r2/templates/redditfooter.html:39 r2/templates/redditfooter.html:51
+#: r2/templates/sciteitfooter.html:39 r2/templates/sciteitfooter.html:51
 msgid "close this window"
 msgstr "close this window"
 
-#: r2/templates/redditheader.html:12
+#: r2/templates/sciteitheader.html:12
 #, python-format
 msgid "want to join? %(register)s in seconds"
 msgstr "want to join? %(register)s in seconds"
@@ -1737,54 +1742,54 @@ msgstr "about %(num)d results in %(second)s."
 msgid "search"
 msgstr "search"
 
-#: r2/templates/subreddit.html:64
+#: r2/templates/subsciteit.html:64
 msgid "leave"
 msgstr "leave"
 
-#: r2/templates/subreddit.html:65
+#: r2/templates/subsciteit.html:65
 msgid "left"
 msgstr "left"
 
-#: r2/templates/subredditbox.html:13
+#: r2/templates/subsciteitbox.html:13
 msgid "save edits"
 msgstr "save edits"
 
-#: r2/templates/subredditinfobar.html:18 r2/templates/subredditinfobar.html:28
+#: r2/templates/subsciteitinfobar.html:18 r2/templates/subsciteitinfobar.html:28
 msgid "subscribe"
 msgstr "subscribe"
 
-#: r2/templates/subredditinfobar.html:20 r2/templates/subredditinfobar.html:26
+#: r2/templates/subsciteitinfobar.html:20 r2/templates/subsciteitinfobar.html:26
 msgid "unsubscribe"
 msgstr "unsubscribe"
 
-#: r2/templates/subredditinfobar.html:37
+#: r2/templates/subsciteitinfobar.html:37
 #, python-format
 msgid "a community for %(time)s"
 msgstr "a community for %(time)s"
 
-#: r2/templates/subredditinfobar.html:43
+#: r2/templates/subsciteitinfobar.html:43
 #, python-format
-msgid "you are a %(contributor)s of this reddit."
-msgstr "you are a %(contributor)s of this reddit."
+msgid "you are a %(contributor)s of this sciteit."
+msgstr "you are a %(contributor)s of this sciteit."
 
-#: r2/templates/subredditinfobar.html:44
+#: r2/templates/subsciteitinfobar.html:44
 msgid "stop being a contributor?"
 msgstr "stop being a contributor?"
 
-#: r2/templates/subredditinfobar.html:45
+#: r2/templates/subsciteitinfobar.html:45
 msgid "you are no longer a contributor"
 msgstr "you are no longer a contributor"
 
-#: r2/templates/subredditinfobar.html:50
+#: r2/templates/subsciteitinfobar.html:50
 #, python-format
-msgid "you are a %(moderator)s of this reddit."
-msgstr "you are a %(moderator)s of this reddit."
+msgid "you are a %(moderator)s of this sciteit."
+msgstr "you are a %(moderator)s of this sciteit."
 
-#: r2/templates/subredditinfobar.html:51
+#: r2/templates/subsciteitinfobar.html:51
 msgid "stop being a moderator?"
 msgstr "stop being a moderator?"
 
-#: r2/templates/subredditinfobar.html:52
+#: r2/templates/subsciteitinfobar.html:52
 msgid "you are no longer a moderator"
 msgstr "you are no longer a moderator"
 
@@ -1900,7 +1905,7 @@ msgstr "you know what they say, you get what you pay for..."
 #: randomstring:sadmessages
 msgid "Funny 500 page message 4"
 msgstr ""
-"Can you fix this? <a href='mailto:jobs@reddit.com'>jobs@reddit.com</a>."
+"Can you fix this? <a href='mailto:jobs@sciteit.com'>jobs@sciteit.com</a>."
 
 #: randomstring:sadmessages
 msgid "Funny 500 page message 5"
@@ -1917,7 +1922,7 @@ msgstr "Conde Nast got their money's worth."
 #: randomstring:sadmessages
 msgid "Funny 500 page message 8"
 msgstr ""
-"Quick, <a href=\"http://reddit.com/store \">buy a shirt</a> and make up for this."
+"Quick, <a href=\"http://sciteit.com/store \">buy a shirt</a> and make up for this."
 
 #: randomstring:sadmessages
 msgid "Funny 500 page message 9"
@@ -1927,83 +1932,83 @@ msgstr "The features don't write themselves, you know. "
 msgid "Funny 500 page message 10"
 msgstr "It's ok to cry."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 1"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 1"
 msgstr "...for your favorite subject."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 2"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 2"
 msgstr "...for your favorite sorority."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 3"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 3"
 msgstr "...for your favorite team."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 4"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 4"
 msgstr "...because you love freedom."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 5"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 5"
 msgstr "...because you hate freedom."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 6"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 6"
 msgstr "...for a fringe political candidate."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 7"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 7"
 msgstr "...for your favorite hobby."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 8"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 8"
 msgstr "...for your favorite programming language."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 9"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 9"
 msgstr "...for your WoW guild."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 10"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 10"
 msgstr "...for your Quake 2 clan."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 11"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 11"
 msgstr "...because this room is full of win!"
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 12"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 12"
 msgstr "...for your LARPing community."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 13"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 13"
 msgstr "...for people who know that Han shot first."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 14"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 14"
 msgstr "...for your office to better share information."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 15"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 15"
 msgstr "...for your community of llama farmers."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 16"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 16"
 msgstr "...because 4chan is getting overcrowded."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 17"
-msgstr "...because nothing in life is free (except reddits!)"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 17"
+msgstr "...because nothing in life is free (except sciteits!)"
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 18"
-msgstr "...sudo create your own reddit."
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 18"
+msgstr "...sudo create your own sciteit."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 19"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 19"
 msgstr "...because Pastafarians need to organize."
 
-#: randomstring:create_reddit
-msgid "Reason to create a reddit 20"
+#: randomstring:create_sciteit
+msgid "Reason to create a sciteit 20"
 msgstr "...do it for the children."
 

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rig and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -42,17 +42,6 @@ from cStringIO import StringIO
 import sys, tempfile, urllib, re, os, sha, subprocess
 from httplib import HTTPConnection
 
-# hack in Paste support for HTTP 429 "Too Many Requests"
-from paste import httpexceptions, wsgiwrappers
-
-class HTTPTooManyRequests(httpexceptions.HTTPClientError):
-    code = 429
-    title = 'Too Many Requests'
-    explanation = ('The server has received too many requests from the client.')
-
-httpexceptions._exceptions[429] = HTTPTooManyRequests
-wsgiwrappers.STATUS_CODE_TEXT[429] = HTTPTooManyRequests.title
-
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
     from pylons import c
@@ -63,18 +52,18 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
     if global_conf is None:
         global_conf = {}
-    codes = [304, 401, 403, 404, 429, 503]
+    codes = [304, 401, 403, 404, 503]
     if not asbool(global_conf.get('debug')):
         codes.append(500)
     if code in codes:
         # StatusBasedForward expects a relative URL (no SCRIPT_NAME)
         d = dict(code = code, message = message)
-        if environ.get('REDDIT_CNAME'):
+        if environ.get('SCITEIT_CNAME'):
             d['cnameframe'] = 1
-        if environ.get('REDDIT_NAME'):
-            d['srname'] = environ.get('REDDIT_NAME')
-        if environ.get('REDDIT_TAKEDOWN'):
-            d['takedown'] = environ.get('REDDIT_TAKEDOWN')
+        if environ.get('SCITEIT_NAME'):
+            d['srname'] = environ.get('SCITEIT_NAME')
+        if environ.get('SCITEIT_TAKEDOWN'):
+            d['takedown'] = environ.get('SCITEIT_TAKEDOWN')
 
         #preserve x-sup-id when 304ing
         if code == 304:
@@ -303,7 +292,7 @@ class DomainMiddleware(object):
                 elif self.is_auth_cname(sub_domains):
                     environ['frameless_cname'] = True
                     environ['authorized_cname'] = True
-                elif ("redditSession=cname" in environ.get('HTTP_COOKIE', '')
+                elif ("sciteitSession=cname" in environ.get('HTTP_COOKIE', '')
                       and environ['REQUEST_METHOD'] != 'POST'
                       and not environ['PATH_INFO'].startswith('/error')):
                     environ['original_path'] = environ['PATH_INFO']
@@ -322,16 +311,16 @@ class DomainMiddleware(object):
                 continue
             # subdomains which change the extension
             elif sd == 'm':
-                environ['reddit-domain-extension'] = 'mobile'
+                environ['sciteit-domain-extension'] = 'mobile'
             elif sd == 'I':
-                environ['reddit-domain-extension'] = 'compact'
+                environ['sciteit-domain-extension'] = 'compact'
             elif sd == 'i':
-                environ['reddit-domain-extension'] = 'compact'
+                environ['sciteit-domain-extension'] = 'compact'
             elif sd in ('api', 'rss', 'xml', 'json'):
-                environ['reddit-domain-extension'] = sd
+                environ['sciteit-domain-extension'] = sd
             elif (len(sd) == 2 or (len(sd) == 5 and sd[2] == '-')) and self.lang_re.match(sd):
-                environ['reddit-prefer-lang'] = sd
-                environ['reddit-domain-prefix'] = sd
+                environ['sciteit-prefer-lang'] = sd
+                environ['sciteit-domain-prefix'] = sd
             else:
                 sr_redirect = sd
                 sub_domains.remove(sd)
@@ -350,7 +339,7 @@ class DomainMiddleware(object):
         return self.app(environ, start_response)
 
 
-class SubredditMiddleware(object):
+class SubsciteitMiddleware(object):
     sr_pattern = re.compile(r'^/r/([^/]{2,})')
 
     def __init__(self, app):
@@ -360,10 +349,10 @@ class SubredditMiddleware(object):
         path = environ['PATH_INFO']
         sr = self.sr_pattern.match(path)
         if sr:
-            environ['subreddit'] = sr.groups()[0]
+            environ['subsciteit'] = sr.groups()[0]
             environ['PATH_INFO'] = self.sr_pattern.sub('', path) or '/'
-        elif path.startswith("/reddits"):
-            environ['subreddit'] = 'r'
+        elif path.startswith("/sciteits"):
+            environ['subsciteit'] = 'r'
         return self.app(environ, start_response)
 
 class DomainListingMiddleware(object):
@@ -373,7 +362,7 @@ class DomainListingMiddleware(object):
         self.app = app
 
     def __call__(self, environ, start_response):
-        if not environ.has_key('subreddit'):
+        if not environ.has_key('subsciteit'):
             path = environ['PATH_INFO']
             domain = self.domain_pattern.match(path)
             if domain:
@@ -389,19 +378,14 @@ class ExtensionMiddleware(object):
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
-        fname, sep, path_ext = path.rpartition('.')
-        domain_ext = environ.get('reddit-domain-extension')
-
-        ext = None
-        if path_ext in extension_mapping:
-            ext = path_ext
-            # Strip off the extension.
-            environ['PATH_INFO'] = path[:-(len(ext) + 1)]
-        elif domain_ext in extension_mapping:
-            ext = domain_ext
-
-        if ext:
-            set_extension(environ, ext)
+        domain_ext = environ.get('sciteit-domain-extension')
+        for ext, val in extension_mapping.iteritems():
+            if ext == domain_ext or path.endswith('.' + ext):
+                set_extension(environ, ext)
+                #strip off the extension
+                if path.endswith('.' + ext):
+                    environ['PATH_INFO'] = path[:-(len(ext) + 1)]
+                break
         else:
             environ['render_style'] = 'html'
             environ['content_type'] = 'text/html; charset=UTF-8'
@@ -483,7 +467,7 @@ class CleanupMiddleware(object):
         return self.app(environ, custom_start_response)
 
 #god this shit is disorganized and confusing
-class RedditApp(PylonsBaseWSGIApp):
+class SciteitApp(PylonsBaseWSGIApp):
     def find_controller(self, controller):
         if controller in self.controller_classes:
             return self.controller_classes[controller]
@@ -518,7 +502,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     load_environment(global_conf, app_conf)
 
     # The Pylons WSGI app
-    app = PylonsApp(base_wsgi_app=RedditApp)
+    app = PylonsApp(base_wsgi_app=SciteitApp)
 
     # CUSTOM MIDDLEWARE HERE (filtered by the error handling middlewares)
 
@@ -531,7 +515,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app = SourceViewMiddleware(app)
 
     app = DomainListingMiddleware(app)
-    app = SubredditMiddleware(app)
+    app = SubsciteitMiddleware(app)
     app = ExtensionMiddleware(app)
     app = DomainMiddleware(app)
 

@@ -1,0 +1,99 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Sciteit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   import locale
+   from r2.lib.strings import strings, Score
+   from r2.lib.pages import WrappedUser
+ %>
+
+<%namespace file="utils.html" import="plain_link, thing_timestamp"/>
+<%namespace file="subsciteit.html" import="addremove_button" />
+<%namespace file="printablebuttons.html" import="ynbutton, state_button" />
+
+<%def name="moderate_button(location, fmt, question, left)">
+  ${ynbutton(_("leave"), left, location,
+             question = question, format = fmt, format_arg = "leave",
+             hidden_data = dict(id = thing.sr._fullname))}
+</%def>
+<div class="titlebox">
+  <h1 class="hover sciteitname">
+    ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
+  </h1>
+
+  ${addremove_button(thing.sr)}
+  ${unsafe(Score.readers(thing.subscribers))}
+
+  %if thing.sr.moderator:
+    ${moderate_button("leavemoderator",
+                      _("you are a moderator of this sciteit. (%(leave)s)"),
+                      _("stop being a moderator?"),
+                      _("you are no longer a moderator"))}
+                     
+  %endif
+
+  %if thing.sr.contributor:
+    ${moderate_button("leavecontributor",
+                      _("you are an approved submitter on this sciteit. (%(leave)s)"),
+                      _("stop being an approved submitter?"),
+                      _("you are no longer an approved submitter"))}
+  %endif
+
+  %if thing.flair_prefs:
+    ${thing.flair_prefs}
+  %endif
+
+  %if thing.sr.description:
+    ${thing.sr.usertext}
+  %endif
+
+  <div class="bottom">
+    %if thing.sr.author:
+      ${unsafe(_("created by&#32;%(user)s") % dict(user = unsafe(WrappedUser(thing.sr.author).render())))}
+    %endif
+    
+    <span class="age">
+      ${_("a community for")}&#32;${thing_timestamp(thing.sr)}
+    </span>  
+  </div>
+
+  %if c.user_is_admin:
+    %if thing.sr._spam:
+      ${state_button("approve", _("approve this sciteit"),
+        "return change_state(this, 'approve');", _("approved"),
+        hidden_data = dict(id = thing.sr._fullname))}
+      %if thing.sr._spam and hasattr(thing.sr, "banner"):
+         &#32;(${strings.banned_by % thing.sr.banner})
+      %endif
+
+    %else:
+      ${state_button("remove", _("ban this sciteit"),
+        "return change_state(this, 'remove');", _("banned"),
+        hidden_data = dict(id = thing.sr._fullname))}
+    %endif
+  %endif
+
+  <div class="clear"> </div>
+  
+
+</div>
+

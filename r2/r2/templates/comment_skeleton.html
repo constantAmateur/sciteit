@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -23,9 +23,10 @@
 <%inherit file="printable.html"/>
 <%namespace file="utils.html" import="plain_link" />
 
-<%def name="midcol(display=True, cls = '')">
+
+<%def name="midcol(display=True, cls = '',tick=False)">
   %if c.profilepage or (not thing._deleted and  (not thing._spam or thing.is_author or c.user_is_admin)):
-    ${parent.midcol(display=display, cls = cls)}
+    ${parent.midcol(display=display, cls = cls,tick=tick)}
   %endif
 </%def>
 
@@ -38,7 +39,13 @@ ${self.tagline(True)}
 
 <%def name="commentBody()">
   ${thing.usertext}
+  ${thing._id}
 </%def>
+
+##<%def name="criticismBody()">
+##  ${thing.usertext}
+##  ${thing._id}
+##</%def>
 
 
 <%def name="entry()">
@@ -46,20 +53,19 @@ ${self.tagline(True)}
    from r2.lib.strings import strings
    collapse = thing.collapsed
 %>
-
 <div class="collapsed" ${(not collapse and "style='display:none'" or "")}>
   ${self.collapsed()}
 </div>
 <div class="noncollapsed" ${(collapse and "style='display:none'" or "")}>
   <p class="tagline">
-    ${self.tagline()}
-%if not getattr(thing, "votable", True):
-    <div class="unvotable-message">${strings.unvotable_message}</div>
-%endif
-  </p>
-  ${self.commentBody()}
+     ${self.tagline()}
+     %if not getattr(thing, "votable", True):
+       <div class="unvotable-message">${strings.unvotable_message}</div>
+     %endif
+      </p>
+     ${self.commentBody()}
   <ul class="flat-list buttons">
-    ${self.buttons()}
+      ${self.buttons()}
   </ul>
 </div>
 </%def>

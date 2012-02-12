@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -26,7 +26,7 @@
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="promotelinkform.html" name="p" />
 <%namespace file="utils.html" 
-            import="error_field, checkbox, image_upload, reddit_selector" />
+            import="error_field, checkbox, image_upload, sciteit_selector" />
 
 ${unsafe(js.use('sponsored'))}
 
@@ -76,7 +76,7 @@ ${unsafe(js.use('sponsored'))}
        })
      </script>
      <div class="targeting">
-       ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
+       ${sciteit_selector(thing.default_sr, thing.sr_searches, thing.subsciteits)}
      </div>
      <div class="buttons">
        <input type="hidden" name="indx" value="" />
@@ -96,19 +96,19 @@ ${unsafe(js.use('sponsored'))}
   %if thing.roadblocks:
   <table>
     <tr>
-      <th>reddit</th>
+      <th>sciteit</th>
       <th>Start Date</th>
       <th>End Date</th>
       <th></th>
     </tr>
-  %for reddit, startdate, enddate in thing.roadblocks:
+  %for sciteit, startdate, enddate in thing.roadblocks:
     <tr>
-      <td>${reddit}</td>
+      <td>${sciteit}</td>
       <td>${startdate.strftime("%Y-%m-%d")}</td>
       <td>${enddate.strftime("%Y-%m-%d")}</td>
       <td>
         <form method="post" action="/post/rm_roadblock" onsubmit="return post_form(this, 'rm_roadblock')">
-          <input type="hidden" name="sr" value="${reddit}"/>
+          <input type="hidden" name="sr" value="${sciteit}"/>
           <input type="hidden" name="startdate" value='${startdate.strftime("%m/%d/%Y")}'/>
           <input type="hidden" name="enddate" value='${enddate.strftime("%m/%d/%Y")}'/>
           <button type="submit">remove</button>

@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -75,9 +75,6 @@ class Listing(object):
             p.update({'after':None, 'before':prev._fullname, 'count':bcount})
             self.before = prev._fullname
             self.prev = (request.path + utils.query_string(p))
-            p_first = request.get.copy()
-            p_first.update({'after':None, 'before':None, 'count':None})
-            self.first = (request.path + utils.query_string(p_first))
         if self.nextprev and self.next_link and next:
             p = request.get.copy()
             p.update({'after':next._fullname, 'before':None, 'count':acount})
@@ -88,10 +85,6 @@ class Listing(object):
 
     def __iter__(self):
         return iter(self.things)
-
-class TableListing(Listing): pass
-
-class ModActionListing(TableListing): pass
 
 class LinkListing(Listing):
     def __init__(self, *a, **kw):

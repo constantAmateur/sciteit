@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -23,7 +23,7 @@ import sha, datetime
 from email.MIMEText import MIMEText
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql.base import PGInet
+from sqlalchemy.databases.postgres import PGInet, PGBigInteger
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 from r2.lib.utils import Storage, timeago, Enum, tup
@@ -42,7 +42,7 @@ def mail_queue(metadata):
                     sa.Column("msg_hash", sa.String),
                     
                     # the id of the account who started it
-                    sa.Column('account_id', sa.BigInteger),
+                    sa.Column('account_id', PGBigInteger),
 
                     # the name (not email) for the from
                     sa.Column('from_name', sa.String),
@@ -81,7 +81,7 @@ def sent_mail_table(metadata, name = 'sent_mail'):
                     sa.Column('msg_hash', sa.String, primary_key=True),
                     
                     # the account who started it
-                    sa.Column('account_id', sa.BigInteger),
+                    sa.Column('account_id', PGBigInteger),
                     
                     # the "To" address of the email
                     sa.Column('to_addr', sa.String),
@@ -175,7 +175,7 @@ class EmailHandler(object):
                 has_opted_out(email, _update = True)
                 opt_count(_update = True)
                 return (email, True)
-            except sa.exc.DBAPIError:
+            except sa.exceptions.SQLError:
                 return (email, False)
         return (None, False)
 
@@ -305,23 +305,23 @@ class Email(object):
                 )
 
     subjects = {
-        Kind.SHARE : _("[reddit] %(user)s has shared a link with you"),
+        Kind.SHARE : _("[sciteit] %(user)s has shared a link with you"),
         Kind.FEEDBACK : _("[feedback] feedback from '%(user)s'"),
         Kind.ADVERTISE :  _("[ad_inq] feedback from '%(user)s'"),
-        Kind.OPTOUT : _("[reddit] email removal notice"),
-        Kind.OPTIN  : _("[reddit] email addition notice"),
-        Kind.RESET_PASSWORD : _("[reddit] reset your password"),
-        Kind.VERIFY_EMAIL : _("[reddit] verify your email address"),
-        Kind.BID_PROMO : _("[reddit] your bid has been accepted"),
-        Kind.ACCEPT_PROMO : _("[reddit] your promotion has been accepted"),
-        Kind.REJECT_PROMO : _("[reddit] your promotion has been rejected"),
-        Kind.QUEUED_PROMO : _("[reddit] your promotion has been charged"),
-        Kind.LIVE_PROMO   : _("[reddit] your promotion is now live"),
-        Kind.FINISHED_PROMO : _("[reddit] your promotion has finished"),
-        Kind.NEW_PROMO : _("[reddit] your promotion has been created"),
+        Kind.OPTOUT : _("[sciteit] email removal notice"),
+        Kind.OPTIN  : _("[sciteit] email addition notice"),
+        Kind.RESET_PASSWORD : _("[sciteit] reset your password"),
+        Kind.VERIFY_EMAIL : _("[sciteit] verify your email address"),
+        Kind.BID_PROMO : _("[sciteit] your bid has been accepted"),
+        Kind.ACCEPT_PROMO : _("[sciteit] your promotion has been accepted"),
+        Kind.REJECT_PROMO : _("[sciteit] your promotion has been rejected"),
+        Kind.QUEUED_PROMO : _("[sciteit] your promotion has been charged"),
+        Kind.LIVE_PROMO   : _("[sciteit] your promotion is now live"),
+        Kind.FINISHED_PROMO : _("[sciteit] your promotion has finished"),
+        Kind.NEW_PROMO : _("[sciteit] your promotion has been created"),
         Kind.HELP_TRANSLATE : _("[i18n] translation offer from '%(user)s'"),
-        Kind.NERDMAIL : _("[reddit] hey, nerd!"),
-        Kind.GOLDMAIL : _("[reddit] reddit gold activation link")
+        Kind.NERDMAIL : _("[sciteit] hey, nerd!"),
+        Kind.GOLDMAIL : _("[sciteit] sciteit gold activation link")
         }
 
     def __init__(self, user, thing, email, from_name, date, ip, banned_ip,
@@ -404,8 +404,8 @@ class Email(object):
             msg['From']    = utf8(fr)
             msg['Subject'] = utf8(self.subject)
             if self.user:
-                msg['X-Reddit-username'] = utf8(self.user.name)
-            msg['X-Reddit-ID'] = self.msg_hash
+                msg['X-Sciteit-username'] = utf8(self.user.name)
+            msg['X-Sciteit-ID'] = self.msg_hash
             if self.reply_to:
                 msg['Reply-To'] = utf8(self.reply_to)
             return msg

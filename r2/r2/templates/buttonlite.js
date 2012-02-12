@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ## 
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ## 
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -36,20 +36,20 @@
        
     var styled_submit = '<a style="color: #369; text-decoration: none;" href="${path}" target="${thing.target}">';
     var unstyled_submit = '<a href="${submiturl(thing.url)}" target="${path}">';
-    var write_string='<span class="reddit_button" style="';
+    var write_string='<span class="sciteit_button" style="';
 %if thing.styled:    
     write_string += 'color: grey;';
 %endif
     write_string += '">';
 %if thing.image > 0:
-    write_string += unstyled_submit + '<img style="height: 2.3ex; vertical-align:top; margin-right: 1ex" src="${static('spreddit' + str(thing.image) + '.gif')}">' + "</a>";
+    write_string += unstyled_submit + '<img style="height: 2.3ex; vertical-align:top; margin-right: 1ex" src="${static('spsciteit' + str(thing.image) + '.gif')}">' + "</a>";
 %endif
 %if thing._fullname:
     write_string += '${Score.safepoints(thing.score)}';
     %if thing.styled:  
-        write_string += ' on ' + styled_submit + 'reddit</a>';
+        write_string += ' on ' + styled_submit + 'sciteit</a>';
     %else:
-        write_string += ' on ' + unstyled_submit + 'reddit</a>';
+        write_string += ' on ' + unstyled_submit + 'sciteit</a>';
     %endif
 %else:
     %if thing.styled:
@@ -60,7 +60,7 @@
     %if thing.image > 0:
     write_string += '</a>';
     %else:
-    write_string += ' to reddit</a>';
+    write_string += ' to sciteit</a>';
     %endif
 %endif
     write_string += '</span>';

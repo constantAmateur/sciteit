@@ -1,7 +1,7 @@
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
-# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 # License Version 1.1, but Sections 14 and 15 have been added to cover use of
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
 #
-# The Original Code is Reddit.
+# The Original Code is Sciteit.
 #
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController
+from sciteit_base import SciteitController
 from r2.lib.pages import *
 from r2.models import *
 from r2.lib.pages.things import wrap_links
@@ -78,7 +78,7 @@ def auto_expand_panel(link):
     else:
         return c.user.pref_frame_commentspanel
 
-class ToolbarController(RedditController):
+class ToolbarController(SciteitController):
 
     allow_stylesheets = True
 
@@ -98,7 +98,7 @@ class ToolbarController(RedditController):
         "/tb/$id36, show a given link with the toolbar"
         if not link:
             return self.abort404()
-        elif link.is_self or not link.subreddit_slow.can_view(c.user):
+        elif link.is_self or not link.subsciteit_slow.can_view(c.user):
             return self.redirect(link.url)
 
         if link.has_thumbnail:
@@ -130,7 +130,7 @@ class ToolbarController(RedditController):
             # 1. User types http://foo.com/http://myurl?cheese=brie
             #    (where foo.com is an unauthorised cname)
             # 2. We generate a frame that points to
-            #    http://www.reddit.com/r/foo/http://myurl?cnameframe=0.12345&cheese=brie
+            #    http://www.sciteit.com/r/foo/http://myurl?cnameframe=0.12345&cheese=brie
             # 3. Because we accept everything after the /r/foo/, and
             #    we've now parsed, modified, and reconstituted that
             #    URL to add cnameframe, we really can't make any good
@@ -166,7 +166,7 @@ class ToolbarController(RedditController):
     def GET_comments(self, link):
         if not link:
             self.abort404()
-        if not link.subreddit_slow.can_view(c.user):
+        if not link.subsciteit_slow.can_view(c.user):
             abort(403, 'forbidden')
 
         links = list(wrap_links(link))
@@ -188,7 +188,7 @@ class ToolbarController(RedditController):
 
         md_bar = safemarkdown(raw_bar, target="_top")
 
-        res = RedditMin(content=CommentsPanel(link=link,
+        res = SciteitMin(content=CommentsPanel(link=link,
                                               listing=listing.listing(),
                                               expanded=auto_expand_panel(link),
                                               infobar=md_bar))
@@ -248,8 +248,8 @@ class ToolbarController(RedditController):
         redir_path = add_sr("/s/" + path)
         force_html()
 
-        # Redirect to http://reddit.com/s/http://google.com
-        # rather than http://reddit.com/s/http:/google.com
+        # Redirect to http://sciteit.com/s/http://google.com
+        # rather than http://sciteit.com/s/http:/google.com
         redir_path = self.slash_fixer.sub(r'\1///', redir_path, 1)
         #                               ^^^
         # 3=2 when it comes to self.redirect()

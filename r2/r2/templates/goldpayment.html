@@ -1,7 +1,7 @@
 ## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
-## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## http://code.sciteit.com/LICENSE. The License is based on the Mozilla Public
 ## License Version 1.1, but Sections 14 and 15 have been added to cover use of
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
@@ -11,7 +11,7 @@
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
 ##
-## The Original Code is Reddit.
+## The Original Code is Sciteit.
 ##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
@@ -32,7 +32,7 @@
   <div class="spacer">
 
     <%utils:round_field title="">
-      <img src="${static('reddit_gold-70.png')}" class="gold-logo"/>
+      <img src="${static('sciteit_gold-70.png')}" class="gold-logo"/>
       <h1>${thing.summary}</h1>
       %if thing.giftmessage:
       <h1>${_("The following gift note will be attached:")}</h1>
@@ -42,10 +42,10 @@
       <br/>
       %endif
 
-      %if thing.pay_from_creddits:
-        <form id="giftgold" action="/api/spendcreddits" method="post"
+      %if thing.pay_from_csciteits:
+        <form id="giftgold" action="/api/spendcsciteits" method="post"
               class="content"
-              onsubmit="return post_form(this, 'spendcreddits');">
+              onsubmit="return post_form(this, 'spendcsciteits');">
           <input type="hidden" name="months" value="${thing.months}" />
           <input type="hidden" name="passthrough" value="${thing.passthrough}" />
           <button class="btn gold-button">${_("give")}</button>
@@ -58,12 +58,12 @@
           <form action="https://checkout.google.com/api/checkout/v2/checkoutForm/Merchant/${thing.google_id}"
                 id="BB_BuyButtonForm" method="post" name="BB_BuyButtonForm"
                 target="_top" style="display:inline">
-            <input name="item_name_1" type="hidden" value="creddits"/>
+            <input name="item_name_1" type="hidden" value="csciteits"/>
             <input name="item_description_1" type="hidden"
                    %if thing.months != thing.quantity:
-                     value="${thing.quantity} year(s) of reddit gold"
+                     value="${thing.quantity} year(s) of sciteit gold"
                    %else:
-                     value="${thing.quantity} month(s) of reddit gold"
+                     value="${thing.quantity} month(s) of sciteit gold"
                    %endif
                    />
             <input name="item_quantity_1" type="hidden"
