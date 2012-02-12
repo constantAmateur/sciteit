@@ -65,11 +65,6 @@ aptitude install $APTITUDE_OPTIONS python-feedparser
 #Setup latex seperately as it's huge
 aptitude install $APTITUDE_OPTIONS texlive-full
 
-#Install scihtmlatex
-mkdir -p /tmp/htmlatex
-cd $SCITEIT_HOME/scihtmlatex
-python setup.py install
-
 #Install the good version of java
 apt-get install python-software-properties
 add-apt-repository ppa:ferramroberto/java
@@ -98,6 +93,13 @@ if [ ! -d $SCITEIT_HOME/scihtmlatex ]; then
     sudo -u $SCIETIT_USER git clone $SCIHTMLATEX_REPO
 fi
 
+#Install scihtmlatex
+if [ ! -d /tmp/htmlatex ]; then
+    mkdir -p /tmp/htmlatex
+fi
+cd $SCITEIT_HOME/scihtmlatex
+python setup.py install
+
 #Setup solr to run...
 if [ ! -d /home/solr/apache-solr-1.4.1 ]; then
     mkdir -p /home/solr
@@ -110,7 +112,6 @@ if [ ! -d /home/solr/apache-solr-1.4.1 ]; then
     cp $SCITEIT_HOME/sciteit/config/solr/solrconfig.xml /home/solr/apache-solr-1.4.1/example/solr/conf/
     chown -R sciteit:sciteit /home/solr
 fi
-
 
 # wait a bit to make sure all the servers come up
 sleep 30
