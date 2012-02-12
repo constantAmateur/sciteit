@@ -2,8 +2,9 @@
 #Matthew Young, Sciteit
 
 # configuration that doesn't change much
-#REDDIT_REPO=git://github.com/reddit/reddit.git
-#I18N_REPO=git://github.com/reddit/reddit-i18n.git
+SCITEIT_REPO=git://github.com/constantAmateur/sciteit.git
+I18N_REPO=git://github.com/constantAmateur/sciteit-i18n.git
+SCIHTMLATEX_REPO=git://github.com/constantAmateur/scihtmlatex.git
 APTITUDE_OPTIONS="-y" # limit bandwidth: -o Acquire::http::Dl-Limit=100"
 
 # don't blunder on if an error occurs
@@ -94,9 +95,15 @@ fi
 cd $SCITEIT_HOME
 
 if [ ! -d $SCITEIT_HOME/sciteit ]; then
+    sudo -u $SCITEIT_USER git clone $SCITEIT_REPO
 fi
 
 if [ ! -d $SCITEIT_HOME/sciteit-i18n ]; then
+    sudo -u $SCITEIT_USER git clone $I18N_REPO
+fi
+
+if [ ! -d $SCITEIT_HOME/scihtmlatex ]; then
+    sudo -u $SCIETIT_USER git clone $SCIHTMLATEX_REPO
 fi
 
 # wait a bit to make sure all the servers come up
