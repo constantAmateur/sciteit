@@ -361,17 +361,13 @@ class Globals(object):
         # try to set the source control revision number
         try:
             #Assume that all files are the same version
-            popen = subprocess.Popen(['svn','info'],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            #popen = subprocess.Popen(["git", "log", "--date=short",
-            #                          "--pretty=format:%H %h", '-n1'],
-            #                         stdin=subprocess.PIPE,
-            #                         stdout=subprocess.PIPE)
+            popen = subprocess.Popen(["git", "log", "--date=short",
+                                      "--pretty=format:%H %h", '-n1'],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE)
             resp, stderrdata = popen.communicate()
-            #resp = resp.strip().split(' ')
-            resp = resp.strip().split('\n')
-            self.version = resp[-2]+' '+resp[-1]
-            self.short_version = resp[-4][10:]
-            #self.version, self.short_version = resp
+            resp = resp.strip().split(' ')
+            self.version, self.short_version = resp
         except object, e:
             self.log.info("Couldn't read source revision (%r)" % e)
             self.version = self.short_version = '(unknown)'
