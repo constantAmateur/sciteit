@@ -69,7 +69,7 @@ aptitude install $APTITUDE_OPTIONS texlive-full
 apt-get install python-software-properties
 add-apt-repository ppa:ferramroberto/java
 apt-get update
-apt-get install sun-java6-jre sun-java6-plugin 
+aptitude install $APTITUDE_OPTIONS sun-java6-jre sun-java6-plugin 
 #If you want to actually use this, you'll have to change it with
 #sudo update-alternatives --config java
 
@@ -90,7 +90,7 @@ if [ ! -d $SCITEIT_HOME/sciteit-i18n ]; then
 fi
 
 if [ ! -d $SCITEIT_HOME/scihtmlatex ]; then
-    sudo -u $SCIETIT_USER git clone $SCIHTMLATEX_REPO
+    sudo -u $SCITEIT_USER git clone $SCIHTMLATEX_REPO
 fi
 
 #Install scihtmlatex
