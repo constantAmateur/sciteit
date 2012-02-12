@@ -185,6 +185,8 @@ update-rc.d -f memcached remove
 
 ln -s $SCITEIT_HOME/sciteit/srv/{comments_q,commentstree_q,scraper_q,vote_link_q,vote_comment_q,search_q,cassandra,memcached,solr} /etc/service/ || true
 /sbin/start svscan || true
+#Change owner...
+sudo chown -R ${SCITEIT_USER}:${SCITEIT_USER} ${SCITEIT_HOME}/sciteit/srv/
 
 # set up uwsgi
 cat >/etc/uwsgi/apps-available/sciteit.ini <<UWSGI
