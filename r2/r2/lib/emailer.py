@@ -265,7 +265,8 @@ def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
     msg["To"] = to_addr
 
     session = smtplib.SMTP(g.smtp_server,g.smtp_port)
-    session.starttls()
-    session.login(g.smtp_user,g.smtp_pass)
+    if int(g.smtp_port)!=25 and g.smtp_user and g.smtp_pass:
+        session.starttls()
+        session.login(g.smtp_user,g.smtp_pass)
     session.sendmail(from_addr, to_addr, msg.as_string())
     session.quit()
