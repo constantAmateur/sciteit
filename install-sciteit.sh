@@ -61,7 +61,7 @@ aptitude update
 # install prerequisites
 DEBIAN_FRONTEND=noninteractive aptitude install $APTITUDE_OPTIONS python-dev python-setuptools python-imaging python-pycaptcha python-mako python-nose python-decorator python-formencode python-pastescript python-beaker python-webhelpers python-amqplib python-pylibmc python-pycountry python-psycopg2 python-cssutils python-beautifulsoup python-sqlalchemy cython python-pybabel python-tz python-boto python-lxml python-pylons python-pycassa python-recaptcha gettext make optipng uwsgi uwsgi-core uwsgi-plugin-python nginx git-core python-profiler memcached postgresql postgresql-client curl daemontools daemontools-run rabbitmq-server cassandra python-bcrypt python-snudown
 #Setup extra things we need that reddit doesn't
-aptitude install $APTITUDE_OPTIONS python-feedparser
+aptitude install $APTITUDE_OPTIONS python-feedparser, haproxy
 #Setup latex seperately as it's huge
 aptitude install $APTITUDE_OPTIONS texlive-full
 
@@ -176,14 +176,16 @@ if [ ! -L run.ini ]; then
     sudo -u $SCITEIT_USER ln -s example.ini run.ini
 fi
 
-#Remove cassandra and memcached
+#Remove haproxy,cassandra and memcached
 update-rc.d -f cassandra remove
 update-rc.d -f memcached remove
+update-rc.d -f haproxy remove
 #Stop them
 /etc/init.d/cassandra stop
 /etc/init.d/memcached stop
+/etc/init.d/haproxy stop
 
-ln -s $SCITEIT_HOME/sciteit/srv/{comments_q,commentstree_q,scraper_q,vote_link_q,vote_comment_q,search_q,cassandra,memcached,solr} /etc/service/ || true
+ln -s $SCITEIT_HOME/sciteit/srv/{haproxy,sciteit-app01,sciteit-app02,comments_q,commentstree_q,scraper_q,vote_link_q,vote_comment_q,search_q,cassandra,memcached,solr} /etc/service/ || true
 /sbin/start svscan || true
 #Change owner...
 sudo chown -R ${SCITEIT_USER}:${SCITEIT_USER} ${SCITEIT_HOME}/sciteit/srv/
@@ -243,6 +245,13 @@ if [ ! -L /etc/nginx/sites-enabled/sciteit ]; then
     ln -s /etc/nginx/sites-available/sciteit /etc/nginx/sites-enabled/sciteit
 fi
 /etc/init.d/nginx restart
+
+#Actually, let's not use nginx, uwsgi for now
+update-rc.d -f nginx remove
+update-rc.d -f uwsgi remove
+#Stop them
+/etc/init.d/nginx stop
+/etc/init.d/uwsgi stop
 
 # install the crontab
 CRONTAB=$(mktemp)
