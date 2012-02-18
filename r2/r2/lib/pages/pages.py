@@ -406,7 +406,7 @@ class SciteitFooter(CachedTemplate):
                     #NamedButton("code", False, nocname=True),
                     #NamedButton("feedback", False),
 		    NamedButton("aboutall",dest = '/help/about',nocname=True),
-		    NamedButton("code",dest = '/help/code',nocname=True),
+		    NamedButton("code",dest = '/code',nocname=True),
 		    NamedButton("feedback",dest = 'feedback')
                 ],
                 title = _("about"),

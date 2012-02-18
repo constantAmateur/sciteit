@@ -245,7 +245,7 @@ def make_map(global_conf={}, app_conf={}):
        dest='http://store.sciteit.com/index.html')
 
     mc('/code', controller='redirect', action='redirect',
-       dest='http://github.com/sciteit/')
+       dest='http://github.com/constantAmateur/')
 
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.sciteit.com/')
