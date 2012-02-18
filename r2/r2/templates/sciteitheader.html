@@ -59,6 +59,23 @@
       ${toolbar}
     %endfor
   </div>
+%if c.site.name in [' sciteit.com', g.default_sr]:
+    <%
+      from r2.models import Subsciteit
+      main=Subsciteit._by_name(g.default_sr)
+      tops=Subsciteit._byID(main.children).values()
+    %>
+      <div id="header-central">
+        %for speciality in tops:
+           <a href=${speciality.path}>${speciality.name.lower()}</a>&nbsp;
+        %endfor
+      </div>
+%endif
+  <div id="header-central-right">
+      Lost?  Click
+&#32;
+<a href="/help/" >here.</a>
+&#32;
 
   <div id="header-bottom-${'left' if c.lang_rtl else 'right'}">
     %if not c.user_is_loggedin:
