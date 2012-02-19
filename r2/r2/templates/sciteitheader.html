@@ -59,7 +59,7 @@
       ${toolbar}
     %endfor
   </div>
-%if c.site.name in [' sciteit.com', g.default_sr]:
+%if c.site.name.strip() in [g.domain, g.default_sr]:
     <%
       from r2.models import Subsciteit
       main=Subsciteit._by_name(g.default_sr)
@@ -76,6 +76,7 @@
 &#32;
 <a href="/help/" >here.</a>
 &#32;
+  </div>
 
   <div id="header-bottom-${'left' if c.lang_rtl else 'right'}">
     %if not c.user_is_loggedin:

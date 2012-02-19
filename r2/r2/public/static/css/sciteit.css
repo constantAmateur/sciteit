@@ -359,14 +359,14 @@ ul.flat-vert {text-align: left;}
     font-size: 200%;
 }
 
-#header-top {
-    position: absolute;
-    right: 5px;
-}
-
 #header-central a {
     font-weight: bold;
     text-decoration: underline;
+}
+
+#header-top {
+    position: absolute;
+    right: 5px;
 }
 
 #header-central-right {
