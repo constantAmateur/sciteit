@@ -352,9 +352,27 @@ ul.flat-vert {text-align: left;}
     margin-bottom: 3px;
 }
 
+#header-central {
+    position: absolute;
+    left: 150px;
+    top: 20px;
+    font-size: 200%;
+}
+
 #header-top {
     position: absolute;
     right: 5px;
+}
+
+#header-central a {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+#header-central-right {
+    position: absolute;
+    right: 0px;
+    top: 20px;
 }
 
 #header-bottom-left {
