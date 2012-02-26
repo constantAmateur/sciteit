@@ -1,5 +1,5 @@
 #!/bin/bash
-touch /home/sciteit/scripts/RUN_broken_things.sh
+touch /home/sciteit/sciteit/scripts/RUN_broken_things.sh
 echo `date`>>/home/sciteit/sciteit/scripts/RUN_broken_things.sh
 
 cd ~/sciteit/r2
